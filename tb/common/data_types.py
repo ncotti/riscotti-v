@@ -15,4 +15,10 @@ class AluMode(IntEnum):
     SLT = 10
     SLTU = 11
     REM = 12
-    INVALID = 13
+    MULH = 13
+    MULHSU = 14
+    MULU = 15
+    DIVU = 16
+    REMU = 17
+    MULHU = 18
+    INVALID = 19
