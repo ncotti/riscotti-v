@@ -191,6 +191,78 @@ async def test_logic(dut):
     await Timer(1)
     assert dut.out.value == 0b11000000_00000000_00000000_01100010
 
+@cocotb.test
+async def test_set_less_than_unsigned(dut):
+    dut.mode.value = AluMode.SLTU
+
+    # op1 < op2
+    dut.op1.value = 4
+    dut.op2.value = 5
+    await Timer(1)
+    assert dut.out.value == 1
+
+    # op1 == op2
+    dut.op1.value = 10
+    dut.op2.value = 10
+    await Timer(1)
+    assert dut.out.value == 0
+
+    # op1 > op2
+    dut.op1.value = 15
+    dut.op2.value = 12
+    await Timer(1)
+    assert dut.out.value == 0
+
+    # 32-bit wide number, op1 < op2
+    # If it was signed, this operation would be 0 < -1
+    dut.op1.value = 0x00000000
+    dut.op2.value = 0xFFFFFFFF
+    await Timer(1)
+    assert dut.out.value == 1
+
+    # 32-bit wide number, op1 > op2
+    # If it was signed, this operation would be -1 > 0
+    dut.op1.value = 0xFFFFFFFF
+    dut.op2.value = 0x00000000
+    await Timer(1)
+    assert dut.out.value == 0
+
+@cocotb.test
+async def test_set_less_than_signed(dut):
+    dut.mode.value = AluMode.SLT
+
+    # op1 < op2
+    dut.op1.value = -5
+    dut.op2.value = -4
+    await Timer(1)
+    assert dut.out.value == 1
+
+    # op1 == op2
+    dut.op1.value = 10
+    dut.op2.value = 10
+    await Timer(1)
+    assert dut.out.value == 0
+
+    # op1 > op2
+    dut.op1.value = 15
+    dut.op2.value = -20
+    await Timer(1)
+    assert dut.out.value == 0
+
+    # 32-bit wide number, op1 < op2
+    # This operation is -1 < 0
+    dut.op1.value = 0xFFFFFFFF
+    dut.op2.value = 0x00000000
+    await Timer(1)
+    assert dut.out.value == 1
+
+    # 32-bit wide number, op1 > op2
+    # This operation is 0 < -1
+    dut.op1.value = 0x00000000
+    dut.op2.value = 0xFFFFFFFF
+    await Timer(1)
+    assert dut.out.value == 0
+
 
 @cocotb.test
 async def test_invalid_mode(dut):

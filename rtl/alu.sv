@@ -15,21 +15,23 @@ module alu
 
     always_comb begin
         case (mode)
-            ADD: out = op1 + op2;
-            SUB: out = op1 - op2;
-            MUL: out = op1 * op2;
-            DIV: out = (op2 == 0) ? 'sd0 : op1 / op2;
-            XOR: out = op1 ^ op2;
-            OR: out = op1 | op2;
-            AND: out = op1 & op2;
-            SLL: out = op1 << op2;
-            SRL: out = op1 >> op2;
-            SRA: out = op1 >>> op2;
+            ALU_ADD: out = op1 + op2;
+            ALU_SUB: out = op1 - op2;
+            ALU_MUL: out = op1 * op2;
+            ALU_DIV: out = (op2 == 0) ? 'sd0 : op1 / op2;
+            ALU_XOR: out = op1 ^ op2;
+            ALU_OR: out = op1 | op2;
+            ALU_AND: out = op1 & op2;
+            ALU_SLL: out = op1 << op2;
+            ALU_SRL: out = op1 >> op2;
+            ALU_SRA: out = op1 >>> op2;
+            ALU_SLT: out = (op1 < op2) ? 32'sd1 : 32'sd0;
+            ALU_SLTU: out = (unsigned'(op1) < unsigned'(op2)) ? 32'sd1 : 32'sd0;
             default: out = '0;
         endcase
     end
 
-    assign div_by_zero = (op2 == 0) & (mode == DIV);
+    assign div_by_zero = (op2 == 0) & (mode == ALU_DIV);
 
 endmodule : alu
 

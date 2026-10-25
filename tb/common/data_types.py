@@ -12,4 +12,7 @@ class AluMode(IntEnum):
     SLL = 7
     SRL = 8
     SRA = 9
-    INVALID = 10
+    SLT = 10
+    SLTU = 11
+    REM = 12
+    INVALID = 13
