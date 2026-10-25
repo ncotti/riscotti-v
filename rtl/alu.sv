@@ -37,7 +37,6 @@ module alu
             ALU_ADD: out = op1 + op2;
             ALU_SUB: out = op1 - op2;
             ALU_MUL: out = smul_64bit[31:0];
-            ALU_MULU: out = mul_64bit[31:0];
             ALU_DIV: out = (sop2 == 0) ? 'sd0 : sop1 / sop2;
             ALU_DIVU: out = (op2 == 0) ? 'sd0 : op1 / op2;
             ALU_XOR: out = op1 ^ op2;

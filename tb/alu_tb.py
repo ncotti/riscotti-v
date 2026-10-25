@@ -123,34 +123,6 @@ async def test_mulh(dut):
     await Timer(2)
     assert dut.out.value == 0xFFFF_FFFF # Sign extension makes it all "F"
 
-
-# Note, for 32-bit multiplication, the lower 32-bit are always identical.
-@cocotb.test
-async def test_mulu(dut):
-    dut.mode.value = AluMode.MULU
-
-    # Two positive values
-    dut.op1.value = 7
-    dut.op2.value = 8
-    await Timer(2)
-    assert dut.out.value == 56
-
-    # One positive, one negative
-    # If this was signed the result would be -1 * 10 = -10 = 0xFFFF_FFFF_FFFF_FFF6
-    dut.op1.value = 0xFFFF_FFFF
-    dut.op2.value = 10
-    await Timer(2)
-    assert dut.out.value == 0xFFFFFFF6
-
-    # Two negatives
-    # If this was signed, the result would be -1 * -2 = 2 = 0x0000_0000_0000_0002
-    # For unsigned, the result is 0xFFFF_FFFD_0000_0002
-    dut.op1.value = 0xFFFF_FFFF # -1
-    dut.op2.value = 0xFFFF_FFFE # -2
-    await Timer(2)
-    assert dut.out.value == 0x00000002
-
-
 @cocotb.test
 async def test_mulhu(dut):
     dut.mode.value = AluMode.MULHU

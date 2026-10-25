@@ -21,10 +21,9 @@ typedef enum logic [4:0] {
     ALU_REM = 5'd12,
     ALU_MULH = 5'd13,
     ALU_MULHSU = 5'd14,
-    ALU_MULU = 5'd15,
-    ALU_DIVU = 5'd16,
-    ALU_REMU = 5'd17,
-    ALU_MULHU = 5'd18
+    ALU_DIVU = 5'd15,
+    ALU_REMU = 5'd16,
+    ALU_MULHU = 5'd17
 } alu_mode_t;
 
 endpackage: data_types

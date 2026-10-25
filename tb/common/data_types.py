@@ -17,8 +17,7 @@ class AluMode(IntEnum):
     REM = 12
     MULH = 13
     MULHSU = 14
-    MULU = 15
-    DIVU = 16
-    REMU = 17
-    MULHU = 18
-    INVALID = 19
+    DIVU = 15
+    REMU = 16
+    MULHU = 17
+    INVALID = 18
