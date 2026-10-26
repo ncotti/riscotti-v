@@ -14,6 +14,7 @@ module alu
     timeunit 1ns; timeprecision 1ns;
 
     always_comb begin
+        /* verilator lint_off UNUSEDSIGNAL */
         logic [63:0] mul_64bit;
         logic [63:0] smul_64bit;
 

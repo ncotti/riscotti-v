@@ -12,6 +12,9 @@ import isa::*;
     output logic [4:0] rd_idx,
     output logic [31:0] imm,
     output logic valid_imm,
+    output load_mode_t load_mode,
+    output store_mode_t store_mode,
+    output branch_mode_t branch_mode,
     output logic valid_op
 );
     import isa::*;
@@ -28,6 +31,10 @@ import isa::*;
     assign funct7 = op[31:25];
 
     assign op_code = {funct7, funct3, opcode};
+
+    assign load_mode = (opcode == I_TYPE2) ? load_mode_t'(funct3) : LM_NONE;
+    assign store_mode = (opcode == S_TYPE) ? store_mode_t'(funct3[1:0]) : SM_NONE;
+    assign branch_mode = (opcode == B_TYPE) ? branch_mode_t'(funct3) : BM_NONE;
 
     always_comb begin
         valid_op = 1'b1;

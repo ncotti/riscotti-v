@@ -24,6 +24,32 @@ typedef enum logic [OPCODE_WIDTH-1:0] {
     FENCE = OPCODE_WIDTH'(8'b0001111)
 } opcode_t;
 
+typedef enum logic [FUNCT3_WIDTH-1:0] {
+    BM_EQ = 3'h0,
+    BM_NE = 3'h1,
+    BM_NONE = 3'h2,
+    BM_LT = 3'h4,
+    BM_GE = 3'h5,
+    BM_LTU = 3'h6,
+    BM_GEU = 3'h7
+} branch_mode_t;
+
+typedef enum logic [1:0] {
+    SM_B = 2'h0,
+    SM_H = 2'h1,
+    SM_W = 2'h2,
+    SM_NONE = 2'h3
+} store_mode_t;
+
+typedef enum logic [FUNCT3_WIDTH-1:0] {
+    LM_B = 3'h0,
+    LM_H = 3'h1,
+    LM_W = 3'h2,
+    LM_BU = 3'h3,
+    LM_HU = 3'h4,
+    LM_NONE = 3'h5
+} load_mode_t;
+
 typedef enum logic [OP_WIDTH-1:0] {
     OP_ADD = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0), R_TYPE},
     OP_SUB = {FUNCT7_WIDTH'(8'h20), FUNCT3_WIDTH'(4'h0),  R_TYPE},
@@ -52,16 +78,16 @@ typedef enum logic [OP_WIDTH-1:0] {
     OP_LBU = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h4),  I_TYPE2},
     OP_LHU = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h5),  I_TYPE2},
 
-    OP_SB = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0),  S_TYPE},
-    OP_SH = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h1),  S_TYPE},
-    OP_SW = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h2),  S_TYPE},
+    OP_SB = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(SM_B),  S_TYPE},
+    OP_SH = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(SM_H),  S_TYPE},
+    OP_SW = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(SM_W),  S_TYPE},
 
-    OP_BEQ = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0),  B_TYPE},
-    OP_BNE = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h1),  B_TYPE},
-    OP_BLT = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h4),  B_TYPE},
-    OP_BGE = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h5),  B_TYPE},
-    OP_BLTU = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h6),  B_TYPE},
-    OP_BGEU = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h7),  B_TYPE},
+    OP_BEQ = {FUNCT7_WIDTH'(8'h00), BM_EQ,  B_TYPE},
+    OP_BNE = {FUNCT7_WIDTH'(8'h00), BM_NE,  B_TYPE},
+    OP_BLT = {FUNCT7_WIDTH'(8'h00), BM_LT,  B_TYPE},
+    OP_BGE = {FUNCT7_WIDTH'(8'h00), BM_GE,  B_TYPE},
+    OP_BLTU = {FUNCT7_WIDTH'(8'h00), BM_LTU,  B_TYPE},
+    OP_BGEU = {FUNCT7_WIDTH'(8'h00), BM_GEU,  B_TYPE},
 
     OP_JAL = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0), J_TYPE},
     OP_JALR = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0),  I_TYPE3},
