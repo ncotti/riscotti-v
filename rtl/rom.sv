@@ -1,7 +1,7 @@
 module rom #(
     int DATA_WIDTH,
     int ADDR_WIDTH,
-    str ROM_FILE
+    string ROM_FILE
 )(
     input logic clk,
     input logic [ADDR_WIDTH-1:0] addr,
@@ -10,7 +10,7 @@ module rom #(
 
     timeunit 1ns; timeprecision 1ns;
 
-    localparam int ROM_SIZE = $pow2(ADDR_WIDTH);
+    localparam int ROM_SIZE = 2 ** ADDR_WIDTH;
 
 logic [DATA_WIDTH-1:0] rom_mem [ROM_SIZE];
 

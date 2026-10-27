@@ -1,19 +1,25 @@
-module top;
+module top #(
+    string ROM_FILE = "tb/rom_hex/rom.hex",
+    int ADDR_WIDTH = 12,
+    int DATA_WIDTH = 32
+)(
+    input logic clk,
+    input logic rstN
+);
 
 timeunit 1ns; timeprecision 1ns;
 
-localparam int ADDR_WIDTH = 12;
-localparam int DATA_WIDTH = 32;
-localparam string ROM_FILE = "rom.hex";
-
-logic clk;
-logic rstN;
 
 logic [DATA_WIDTH-1:0] rom_data;
+
+/* verilator lint_off UNUSEDSIGNAL */
 logic [DATA_WIDTH-1:0] pc;
 
 logic ram_we;
-logic [DATA_WIDTH-1:0] ram_din, ram_dout;
+logic [DATA_WIDTH-1:0] dout, ram_dout;
+logic [ADDR_WIDTH-1:0] rom_addr;
+
+assign rom_addr = pc[ADDR_WIDTH+1:2];
 
 rom #(
     .ADDR_WIDTH(ADDR_WIDTH),
@@ -21,7 +27,7 @@ rom #(
     .ROM_FILE(ROM_FILE)
 ) rom_i (
     .clk(clk),
-    .addr(pc),
+    .addr(rom_addr),
     .dout(rom_data)
 );
 
@@ -30,9 +36,9 @@ ram #(
     .DATA_WIDTH(DATA_WIDTH)
 ) ram_i (
     .clk(clk),
-    .addr(ram_din[ADDR_WIDTH-1:0]),
+    .addr(dout[ADDR_WIDTH-1:0]),
     .we(ram_we),
-    .din(ram_din),
+    .din(dout),
     .dout(ram_dout)
 );
 
@@ -42,7 +48,7 @@ riscotti_v riscotti_v_i(
     .instruction(rom_data),
     .din(ram_dout),
     .pc(pc),
-    .dout(ram_din),
+    .dout(dout),
     .we(ram_we)
 );
 

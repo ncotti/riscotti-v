@@ -11,7 +11,7 @@ module ram #(
 
     timeunit 1ns; timeprecision 1ns;
 
-    localparam int RAM_SIZE = $pow2(ADDR_WIDTH);
+    localparam int RAM_SIZE = 2 ** ADDR_WIDTH;
 
 logic [DATA_WIDTH-1:0] ram_mem [RAM_SIZE];
 
