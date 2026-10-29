@@ -3,6 +3,7 @@ from cocotb.triggers import Timer
 
 from common.data_types import AluMode
 
+
 @cocotb.test
 async def test_addition(dut):
     dut.mode.value = AluMode.ADD
@@ -31,6 +32,7 @@ async def test_addition(dut):
     await Timer(2)
     assert dut.out.value == 0x00000002
 
+
 @cocotb.test
 async def test_subtraction(dut):
     dut.mode.value = AluMode.SUB
@@ -58,6 +60,7 @@ async def test_subtraction(dut):
     dut.op2.value = 45
     await Timer(2)
     assert dut.out.value == -75
+
 
 @cocotb.test
 async def test_mul(dut):
@@ -99,6 +102,7 @@ async def test_mul(dut):
     await Timer(2)
     assert dut.out.value == 0x33332988
 
+
 @cocotb.test
 async def test_mulh(dut):
     dut.mode.value = AluMode.MULH
@@ -111,17 +115,18 @@ async def test_mulh(dut):
 
     # Two negatives
     # Expected result is 3 == 0x0000_0000_0000_0003
-    dut.op1.value = 0xFFFF_FFFD # -3
-    dut.op2.value = 0xFFFF_FFFF # -1
+    dut.op1.value = 0xFFFF_FFFD  # -3
+    dut.op2.value = 0xFFFF_FFFF  # -1
     await Timer(2)
-    assert dut.out.value == 0x0000_0000 # Sign extension makes it all "0"
+    assert dut.out.value == 0x0000_0000  # Sign extension makes it all "0"
 
     # Negative and positive
     # Expected result is -2 = 0xFFFF_FFFF_FFFF_FFFE
-    dut.op1.value = 0xFFFF_FFFF # -1
-    dut.op2.value = 0x0000_0002 # 2
+    dut.op1.value = 0xFFFF_FFFF  # -1
+    dut.op2.value = 0x0000_0002  # 2
     await Timer(2)
-    assert dut.out.value == 0xFFFF_FFFF # Sign extension makes it all "F"
+    assert dut.out.value == 0xFFFF_FFFF  # Sign extension makes it all "F"
+
 
 @cocotb.test
 async def test_mulhu(dut):
@@ -136,18 +141,19 @@ async def test_mulhu(dut):
     # Two negatives
     # If this was signed, the result would be 3 = 0x0000_0000_0000_0003
     # Unsigned result is 0xFFFF_FFFC_0000_0003
-    dut.op1.value = 0xFFFF_FFFD # -3
-    dut.op2.value = 0xFFFF_FFFF # -1
+    dut.op1.value = 0xFFFF_FFFD  # -3
+    dut.op2.value = 0xFFFF_FFFF  # -1
     await Timer(2)
     assert dut.out.value == 0xFFFFFFFC
 
     # Negative and positive
     # If this was signed, the result would be -4 = 0xFFFF_FFFF_FFFF_FFFC
     # Unsigned result is 0x0000_0003_FFFF_FFFC
-    dut.op1.value = 0xFFFF_FFFF # -1
-    dut.op2.value = 0x0000_0004 # 4
+    dut.op1.value = 0xFFFF_FFFF  # -1
+    dut.op2.value = 0x0000_0004  # 4
     await Timer(2)
     assert dut.out.value == 0x0000_0003
+
 
 @cocotb.test
 async def test_mulhsu(dut):
@@ -161,15 +167,15 @@ async def test_mulhsu(dut):
 
     # First positive, second negative
     # Expected value should be 2 * 0xFFFF_FFFF = 0x0000_0001_FFFF_FFFE
-    dut.op1.value = 0x0000_0002 # Should be treated as signed
-    dut.op2.value = 0xFFFF_FFFF # Should be treated as unsigned
+    dut.op1.value = 0x0000_0002  # Should be treated as signed
+    dut.op2.value = 0xFFFF_FFFF  # Should be treated as unsigned
     await Timer(2)
     assert dut.out.value == 0x0000_0001
 
     # First negative, second positive
     # Expected value should be -1 * 2 = -2 = 0xFFFF_FFFF_FFFF_FFFE
-    dut.op1.value = 0xFFFF_FFFF # Should be treated as signed
-    dut.op2.value = 0x0000_0002 # Should be treated as unsigned
+    dut.op1.value = 0xFFFF_FFFF  # Should be treated as signed
+    dut.op2.value = 0x0000_0002  # Should be treated as unsigned
     await Timer(2)
     assert dut.out.value == 0xFFFF_FFFF
 
@@ -179,6 +185,7 @@ async def test_mulhsu(dut):
     dut.op2.value = 0xFFFF_FFFF
     await Timer(2)
     assert dut.out.value == 0xFFFF_FFFE
+
 
 @cocotb.test
 async def test_division(dut):
@@ -227,6 +234,7 @@ async def test_division(dut):
     await Timer(2)
     assert dut.out.value == 0
     assert dut.div_by_zero.value == 1
+
 
 @cocotb.test
 async def test_divu(dut):
@@ -279,6 +287,7 @@ async def test_divu(dut):
     assert dut.out.value == 0
     assert dut.div_by_zero.value == 1
 
+
 @cocotb.test
 async def test_logic(dut):
     dut.mode.value = AluMode.XOR
@@ -322,6 +331,7 @@ async def test_logic(dut):
     await Timer(2)
     assert dut.out.value == 0b11000000_00000000_00000000_01100010
 
+
 @cocotb.test
 async def test_set_less_than_unsigned(dut):
     dut.mode.value = AluMode.SLTU
@@ -358,6 +368,7 @@ async def test_set_less_than_unsigned(dut):
     await Timer(2)
     assert dut.out.value == 0
 
+
 @cocotb.test
 async def test_set_less_than_signed(dut):
     dut.mode.value = AluMode.SLT
@@ -393,6 +404,7 @@ async def test_set_less_than_signed(dut):
     dut.op2.value = 0xFFFFFFFF
     await Timer(2)
     assert dut.out.value == 0
+
 
 @cocotb.test
 async def test_rem(dut):
@@ -458,6 +470,7 @@ async def test_rem(dut):
     await Timer(2)
     assert dut.out.value == 0
 
+
 @cocotb.test
 async def test_remu(dut):
     dut.mode.value = AluMode.REMU
@@ -471,7 +484,6 @@ async def test_remu(dut):
     dut.op2.value = 4
     await Timer(2)
     assert dut.out.value == 2
-
 
     dut.op1.value = 7
     dut.op2.value = 4

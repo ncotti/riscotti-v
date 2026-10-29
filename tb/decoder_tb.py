@@ -4,6 +4,7 @@ from cocotb.triggers import Timer
 from common.riscv_instructions import *
 from common.data_types import *
 
+
 @cocotb.test
 async def test_r_instructions(dut):
     riscv_instructions = [
@@ -33,9 +34,11 @@ async def test_r_instructions(dut):
     ]
 
     index = 0
-    for instruction, expected_alu_mode in zip(riscv_instructions, expected_alu_modes):
+    for instruction, expected_alu_mode in zip(
+        riscv_instructions, expected_alu_modes
+    ):
         index = index + 1
-        dut.op.value = instruction(index,index+1,index+2)
+        dut.op.value = instruction(index, index + 1, index + 2)
 
         await Timer(1)
         assert dut.alu_mode.value == expected_alu_mode
@@ -72,9 +75,11 @@ async def test_m_extension_instructions(dut):
     ]
 
     index = 0
-    for instruction, expected_alu_mode in zip(riscv_instructions, expected_alu_modes):
+    for instruction, expected_alu_mode in zip(
+        riscv_instructions, expected_alu_modes
+    ):
         index = index + 1
-        dut.op.value = instruction(index,index+1,index+2)
+        dut.op.value = instruction(index, index + 1, index + 2)
 
         await Timer(1)
         assert dut.alu_mode.value == expected_alu_mode
@@ -84,6 +89,7 @@ async def test_m_extension_instructions(dut):
         assert dut.imm.value == 0
         assert dut.valid_imm.value == 0
         assert dut.valid_op.value == 1
+
 
 @cocotb.test
 async def test_i_alu_instructions(dut):
@@ -112,9 +118,11 @@ async def test_i_alu_instructions(dut):
     ]
 
     index = 0
-    for instruction, expected_alu_mode in zip(riscv_instructions, expected_alu_modes):
+    for instruction, expected_alu_mode in zip(
+        riscv_instructions, expected_alu_modes
+    ):
         index = index + 1
-        dut.op.value = instruction(index,index+1,index+2)
+        dut.op.value = instruction(index, index + 1, index + 2)
 
         await Timer(1)
         assert dut.alu_mode.value == expected_alu_mode
@@ -124,6 +132,7 @@ async def test_i_alu_instructions(dut):
         assert dut.imm.value == index + 2
         assert dut.valid_imm.value == 1
         assert dut.valid_op.value == 1
+
 
 @cocotb.test
 async def test_load_instructions(dut):
@@ -138,7 +147,7 @@ async def test_load_instructions(dut):
     index = 0
     for instruction in riscv_instructions:
         index = index + 1
-        dut.op.value = instruction(index,index+1,index+2)
+        dut.op.value = instruction(index, index + 1, index + 2)
 
         await Timer(1)
         assert dut.alu_mode.value == AluMode.ADD
@@ -148,6 +157,7 @@ async def test_load_instructions(dut):
         assert dut.imm.value == index + 2
         assert dut.valid_imm.value == 1
         assert dut.valid_op.value == 1
+
 
 @cocotb.test
 async def test_store_instructions(dut):
@@ -160,7 +170,7 @@ async def test_store_instructions(dut):
     index = 0
     for instruction in riscv_instructions:
         index = index + 1
-        dut.op.value = instruction(index,index+1,index+2)
+        dut.op.value = instruction(index, index + 1, index + 2)
 
         await Timer(1)
         assert dut.alu_mode.value == AluMode.ADD
@@ -170,6 +180,7 @@ async def test_store_instructions(dut):
         assert dut.imm.value == index + 2
         assert dut.valid_imm.value == 1
         assert dut.valid_op.value == 1
+
 
 @cocotb.test
 async def test_branch_instructions(dut):
@@ -187,7 +198,7 @@ async def test_branch_instructions(dut):
         index = index + 1
 
         # Note, offset can only be even
-        dut.op.value = instruction(index,index+1, index+ 2 + (index % 2))
+        dut.op.value = instruction(index, index + 1, index + 2 + (index % 2))
 
         await Timer(1)
         assert dut.alu_mode.value == AluMode.ADD
@@ -198,13 +209,16 @@ async def test_branch_instructions(dut):
         assert dut.valid_imm.value == 1
         assert dut.valid_op.value == 1
 
+
 @cocotb.test
 async def test_jump_instructions(dut):
     pass
 
+
 @cocotb.test
 async def test_load_upper_instructions(dut):
     pass
+
 
 @cocotb.test
 async def test_env_instructions(dut):

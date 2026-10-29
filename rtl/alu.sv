@@ -57,7 +57,8 @@ module alu
         endcase
     end
 
-    assign div_by_zero = (op2 == 0) & (mode == ALU_DIV || mode == ALU_DIVU || mode == ALU_REM || mode == ALU_REMU);
+    assign div_by_zero = (op2 == 0) & (mode == ALU_DIV || mode == ALU_DIVU
+        || mode == ALU_REM || mode == ALU_REMU);
 
 endmodule : alu
 

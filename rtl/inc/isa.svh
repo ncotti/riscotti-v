@@ -3,115 +3,115 @@
 
 package isa;
 
-timeunit 1ns; timeprecision 1ns;
+    timeunit 1ns; timeprecision 1ns;
 
-localparam OPCODE_WIDTH = 7;
-localparam FUNCT3_WIDTH = 3;
-localparam FUNCT7_WIDTH = 7;
-localparam OP_WIDTH = OPCODE_WIDTH + FUNCT3_WIDTH + FUNCT7_WIDTH;
+    localparam int OpcodeWidth = 7;
+    localparam int Funct3Width = 3;
+    localparam int Funct7Width = 7;
+    localparam int OpWidth = OpcodeWidth + Funct3Width + Funct7Width;
 
-typedef enum logic [OPCODE_WIDTH-1:0] {
-    R_TYPE = OPCODE_WIDTH'(8'b0110011),
-    I_TYPE1 = OPCODE_WIDTH'(8'b0010011),
-    I_TYPE2 = OPCODE_WIDTH'(8'b0000011),
-    I_TYPE3 = OPCODE_WIDTH'(8'b1100111),
-    I_TYPE4 = OPCODE_WIDTH'(8'b1110011),
-    S_TYPE = OPCODE_WIDTH'(8'b0100011),
-    B_TYPE = OPCODE_WIDTH'(8'b1100011),
-    U_TYPE1 = OPCODE_WIDTH'(8'b0110111),
-    U_TYPE2 = OPCODE_WIDTH'(8'b0010111),
-    J_TYPE = OPCODE_WIDTH'(8'b1101111),
-    FENCE = OPCODE_WIDTH'(8'b0001111)
-} opcode_t;
+    typedef enum logic [OpcodeWidth-1:0] {
+        R_TYPE  = 7'b0110011,
+        I_TYPE1 = 7'b0010011,
+        I_TYPE2 = 7'b0000011,
+        I_TYPE3 = 7'b1100111,
+        I_TYPE4 = 7'b1110011,
+        S_TYPE  = 7'b0100011,
+        B_TYPE  = 7'b1100011,
+        U_TYPE1 = 7'b0110111,
+        U_TYPE2 = 7'b0010111,
+        J_TYPE  = 7'b1101111,
+        FENCE   = 7'b0001111
+    } opcode_t;
 
-typedef enum logic [FUNCT3_WIDTH-1:0] {
-    BM_EQ = 3'h0,
-    BM_NE = 3'h1,
-    BM_NONE = 3'h2,
-    BM_LT = 3'h4,
-    BM_GE = 3'h5,
-    BM_LTU = 3'h6,
-    BM_GEU = 3'h7
-} branch_mode_t;
+    typedef enum logic [Funct3Width-1:0] {
+        BM_EQ   = 3'h0,
+        BM_NE   = 3'h1,
+        BM_NONE = 3'h2,
+        BM_LT   = 3'h4,
+        BM_GE   = 3'h5,
+        BM_LTU  = 3'h6,
+        BM_GEU  = 3'h7
+    } branch_mode_t;
 
-typedef enum logic [1:0] {
-    SM_B = 2'h0,
-    SM_H = 2'h1,
-    SM_W = 2'h2,
-    SM_NONE = 2'h3
-} store_mode_t;
+    typedef enum logic [1:0] {
+        SM_B = 2'h0,
+        SM_H = 2'h1,
+        SM_W = 2'h2,
+        SM_NONE = 2'h3
+    } store_mode_t;
 
-typedef enum logic [FUNCT3_WIDTH-1:0] {
-    LM_B = 3'h0,
-    LM_H = 3'h1,
-    LM_W = 3'h2,
-    LM_BU = 3'h4,
-    LM_HU = 3'h5,
-    LM_NONE = 3'h7
-} load_mode_t;
+    typedef enum logic [Funct3Width-1:0] {
+        LM_B = 3'h0,
+        LM_H = 3'h1,
+        LM_W = 3'h2,
+        LM_BU = 3'h4,
+        LM_HU = 3'h5,
+        LM_NONE = 3'h7
+    } load_mode_t;
 
-typedef enum [FUNCT7_WIDTH + FUNCT3_WIDTH - 1:0] {
-    RM_ADD = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0)},
-    RM_SUB = {FUNCT7_WIDTH'(8'h20), FUNCT3_WIDTH'(4'h0)},
-    RM_XOR = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h4)},
-    RM_OR = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h6)},
-    RM_AND = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h7)},
-    RM_SLL = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h1)},
-    RM_SRL = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h5)},
-    RM_SRA = {FUNCT7_WIDTH'(8'h20), FUNCT3_WIDTH'(4'h5)},
-    RM_SLT = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h2)},
-    RM_SLTU = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h3)},
+    typedef enum logic [Funct7Width + Funct3Width - 1:0] {
+        RM_ADD  = {Funct7Width'(8'h00), Funct3Width'(4'h0)},
+        RM_SUB  = {Funct7Width'(8'h20), Funct3Width'(4'h0)},
+        RM_XOR  = {Funct7Width'(8'h00), Funct3Width'(4'h4)},
+        RM_OR   = {Funct7Width'(8'h00), Funct3Width'(4'h6)},
+        RM_AND  = {Funct7Width'(8'h00), Funct3Width'(4'h7)},
+        RM_SLL  = {Funct7Width'(8'h00), Funct3Width'(4'h1)},
+        RM_SRL  = {Funct7Width'(8'h00), Funct3Width'(4'h5)},
+        RM_SRA  = {Funct7Width'(8'h20), Funct3Width'(4'h5)},
+        RM_SLT  = {Funct7Width'(8'h00), Funct3Width'(4'h2)},
+        RM_SLTU = {Funct7Width'(8'h00), Funct3Width'(4'h3)},
 
-    RM_MUL = {FUNCT7_WIDTH'(8'h01), FUNCT3_WIDTH'(4'h0)},
-    RM_MULH = {FUNCT7_WIDTH'(8'h01), FUNCT3_WIDTH'(4'h1)},
-    RM_MULHSU = {FUNCT7_WIDTH'(8'h01), FUNCT3_WIDTH'(4'h2)},
-    RM_MULHU = {FUNCT7_WIDTH'(8'h01), FUNCT3_WIDTH'(4'h3)},
-    RM_DIV = {FUNCT7_WIDTH'(8'h01), FUNCT3_WIDTH'(4'h4)},
-    RM_DIVU = {FUNCT7_WIDTH'(8'h01), FUNCT3_WIDTH'(4'h5)},
-    RM_REM = {FUNCT7_WIDTH'(8'h01), FUNCT3_WIDTH'(4'h6)},
-    RM_REMU = {FUNCT7_WIDTH'(8'h01), FUNCT3_WIDTH'(4'h7)}
-} r_mode_t;
+        RM_MUL = {Funct7Width'(8'h01), Funct3Width'(4'h0)},
+        RM_MULH = {Funct7Width'(8'h01), Funct3Width'(4'h1)},
+        RM_MULHSU = {Funct7Width'(8'h01), Funct3Width'(4'h2)},
+        RM_MULHU = {Funct7Width'(8'h01), Funct3Width'(4'h3)},
+        RM_DIV = {Funct7Width'(8'h01), Funct3Width'(4'h4)},
+        RM_DIVU = {Funct7Width'(8'h01), Funct3Width'(4'h5)},
+        RM_REM = {Funct7Width'(8'h01), Funct3Width'(4'h6)},
+        RM_REMU = {Funct7Width'(8'h01), Funct3Width'(4'h7)}
+    } r_mode_t;
 
-typedef enum logic [OP_WIDTH-1:0] {
-    OP_ADDI = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0),  I_TYPE1},
-    OP_XORI = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h4),  I_TYPE1},
-    OP_ORI = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h6),  I_TYPE1},
-    OP_ANDI = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h7),  I_TYPE1},
-    OP_SLLI = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h1),  I_TYPE1},
-    OP_SRLI = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h5),  I_TYPE1},
-    OP_SRAI = {FUNCT7_WIDTH'(8'h20), FUNCT3_WIDTH'(4'h5),  I_TYPE1},
-    OP_SLTI = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h2),  I_TYPE1},
-    OP_SLTIU = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h3),  I_TYPE1},
+    typedef enum logic [OpWidth-1:0] {
+        OP_ADDI  = {Funct7Width'(8'h00), Funct3Width'(4'h0), I_TYPE1},
+        OP_XORI  = {Funct7Width'(8'h00), Funct3Width'(4'h4), I_TYPE1},
+        OP_ORI   = {Funct7Width'(8'h00), Funct3Width'(4'h6), I_TYPE1},
+        OP_ANDI  = {Funct7Width'(8'h00), Funct3Width'(4'h7), I_TYPE1},
+        OP_SLLI  = {Funct7Width'(8'h00), Funct3Width'(4'h1), I_TYPE1},
+        OP_SRLI  = {Funct7Width'(8'h00), Funct3Width'(4'h5), I_TYPE1},
+        OP_SRAI  = {Funct7Width'(8'h20), Funct3Width'(4'h5), I_TYPE1},
+        OP_SLTI  = {Funct7Width'(8'h00), Funct3Width'(4'h2), I_TYPE1},
+        OP_SLTIU = {Funct7Width'(8'h00), Funct3Width'(4'h3), I_TYPE1},
 
-    OP_LB = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0),  I_TYPE2},
-    OP_LH = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h1),  I_TYPE2},
-    OP_LW = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h2),  I_TYPE2},
-    OP_LBU = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h4),  I_TYPE2},
-    OP_LHU = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h5),  I_TYPE2},
+        OP_LB  = {Funct7Width'(8'h00), Funct3Width'(4'h0), I_TYPE2},
+        OP_LH  = {Funct7Width'(8'h00), Funct3Width'(4'h1), I_TYPE2},
+        OP_LW  = {Funct7Width'(8'h00), Funct3Width'(4'h2), I_TYPE2},
+        OP_LBU = {Funct7Width'(8'h00), Funct3Width'(4'h4), I_TYPE2},
+        OP_LHU = {Funct7Width'(8'h00), Funct3Width'(4'h5), I_TYPE2},
 
-    OP_SB = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(SM_B),  S_TYPE},
-    OP_SH = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(SM_H),  S_TYPE},
-    OP_SW = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(SM_W),  S_TYPE},
+        OP_SB = {Funct7Width'(8'h00), Funct3Width'(SM_B), S_TYPE},
+        OP_SH = {Funct7Width'(8'h00), Funct3Width'(SM_H), S_TYPE},
+        OP_SW = {Funct7Width'(8'h00), Funct3Width'(SM_W), S_TYPE},
 
-    OP_BEQ = {FUNCT7_WIDTH'(8'h00), BM_EQ,  B_TYPE},
-    OP_BNE = {FUNCT7_WIDTH'(8'h00), BM_NE,  B_TYPE},
-    OP_BLT = {FUNCT7_WIDTH'(8'h00), BM_LT,  B_TYPE},
-    OP_BGE = {FUNCT7_WIDTH'(8'h00), BM_GE,  B_TYPE},
-    OP_BLTU = {FUNCT7_WIDTH'(8'h00), BM_LTU,  B_TYPE},
-    OP_BGEU = {FUNCT7_WIDTH'(8'h00), BM_GEU,  B_TYPE},
+        OP_BEQ  = {Funct7Width'(8'h00), BM_EQ, B_TYPE},
+        OP_BNE  = {Funct7Width'(8'h00), BM_NE, B_TYPE},
+        OP_BLT  = {Funct7Width'(8'h00), BM_LT, B_TYPE},
+        OP_BGE  = {Funct7Width'(8'h00), BM_GE, B_TYPE},
+        OP_BLTU = {Funct7Width'(8'h00), BM_LTU, B_TYPE},
+        OP_BGEU = {Funct7Width'(8'h00), BM_GEU, B_TYPE},
 
-    OP_JAL = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0), J_TYPE},
-    OP_JALR = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0),  I_TYPE3},
+        OP_JAL  = {Funct7Width'(8'h00), Funct3Width'(4'h0), J_TYPE},
+        OP_JALR = {Funct7Width'(8'h00), Funct3Width'(4'h0), I_TYPE3},
 
-    OP_LUI = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0), U_TYPE1},
-    OP_AUIPC = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0), U_TYPE2},
+        OP_LUI   = {Funct7Width'(8'h00), Funct3Width'(4'h0), U_TYPE1},
+        OP_AUIPC = {Funct7Width'(8'h00), Funct3Width'(4'h0), U_TYPE2},
 
-    OP_ECALL = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0),  I_TYPE4},
-    OP_EBREAK = {FUNCT7_WIDTH'(8'h01), FUNCT3_WIDTH'(4'h0),  I_TYPE4},
-    OP_FENCE = {FUNCT7_WIDTH'(8'h00), FUNCT3_WIDTH'(4'h0), FENCE}
-} op_t;
+        OP_ECALL  = {Funct7Width'(8'h00), Funct3Width'(4'h0), I_TYPE4},
+        OP_EBREAK = {Funct7Width'(8'h01), Funct3Width'(4'h0), I_TYPE4},
+        OP_FENCE  = {Funct7Width'(8'h00), Funct3Width'(4'h0), FENCE}
+    } op_t;
 
-endpackage: isa
+endpackage : isa
 
 
-`endif // ISA_H_
+`endif  // ISA_H_

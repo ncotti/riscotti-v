@@ -2,8 +2,8 @@
 `include "data_types.svh"
 
 module decoder
-import data_types::*;
-import isa::*;
+    import data_types::*;
+    import isa::*;
 (
     input logic [31:0] op,
     output alu_mode_t alu_mode,
@@ -22,8 +22,8 @@ import isa::*;
     timeunit 1ns; timeprecision 1ns;
 
     opcode_t opcode;
-    logic [FUNCT3_WIDTH-1:0] funct3;
-    logic [FUNCT7_WIDTH-1:0] funct7;
+    logic [Funct3Width-1:0] funct3;
+    logic [Funct7Width-1:0] funct7;
 
     r_mode_t r_mode;
 
@@ -140,7 +140,7 @@ import isa::*;
                 valid_imm = 1;
                 imm = {19'b0, op[31], op[7], op[30:25], op[11:8], 1'b0};
                 alu_mode = ALU_ADD;
-                case(branch_mode_t'(funct3))
+                case (branch_mode_t'(funct3))
                     BM_EQ, BM_NE, BM_LT, BM_GE, BM_LTU, BM_GEU: valid_op = 1'b1;
                     default: valid_op = 1'b0;
                 endcase

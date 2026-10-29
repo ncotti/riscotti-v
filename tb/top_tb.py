@@ -25,7 +25,7 @@ async def test_imm_math_instructions(dut):
 
     expected_values = [0x55, 0xFB, 0x16, 0x08, 0x50, 0x06, 0x03, 0x01, 0x00]
 
-    while (dut.dout.value != 0xFF):
+    while dut.dout.value != 0xFF:
         await RisingEdge(dut.clk)
 
     await RisingEdge(dut.clk)
