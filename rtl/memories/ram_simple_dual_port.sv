@@ -26,8 +26,7 @@
 /// E.g., given the address `0x01XX == 0x0100`, which holds the value `0xDDCCBBAA`,
 /// and let `wdata = 0x12345678` and `wstrb = 4'b1011`, the memory at 0x0100
 /// would be set to `12CC5678`, i.e., bytes 0x103, 0x101 and 0x100 will be written.
-/// @param rdata Data read from `raddr`. If a write operation was issued, then
-/// the previously held value is returned, not the one being written.
+/// @param rdata Data read from `raddr`.
 /// If an unaligned memory address was specified, e.g., 0x102, the returned
 /// value will be the value from 0x100, and the user should read the third
 /// byte from `rdata`.
