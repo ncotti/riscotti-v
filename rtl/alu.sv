@@ -1,5 +1,14 @@
 `include "data_types.svh"
 
+/// @brief ALU (Arithmetic Logic Unit).
+///
+/// @param WIDTH Width of operands.
+/// @param op1 First operand.
+/// @param op2 Second operand.
+/// @param mode Operation to be performed.
+/// @param out Result of the operation.
+/// @param div_by_zero Whether a division or remainder operation was asked,
+/// and the second operand was zero.
 module alu
     import data_types::*;
 #(
@@ -38,8 +47,8 @@ module alu
             ALU_ADD: out = op1 + op2;
             ALU_SUB: out = op1 - op2;
             ALU_MUL: out = smul_64bit[31:0];
-            ALU_DIV: out = (sop2 == 0) ? 'sd0 : sop1 / sop2;
-            ALU_DIVU: out = (op2 == 0) ? 'sd0 : op1 / op2;
+            ALU_DIV: out = sop1 / sop2;
+            ALU_DIVU: out = op1 / op2;
             ALU_XOR: out = op1 ^ op2;
             ALU_OR: out = op1 | op2;
             ALU_AND: out = op1 & op2;
