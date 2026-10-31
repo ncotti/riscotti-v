@@ -212,14 +212,14 @@ async def test_branch_instructions(dut):
 
 @cocotb.test
 async def test_jump_instructions(dut):
-    pass
+    assert 0
 
 
 @cocotb.test
 async def test_load_upper_instructions(dut):
-    pass
+    assert 0
 
 
 @cocotb.test
 async def test_env_instructions(dut):
-    pass
+    assert 0

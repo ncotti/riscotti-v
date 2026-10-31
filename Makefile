@@ -1,3 +1,5 @@
+V_TB_TOP := top
+
 V_SRC_DIRS := rtl
 V_INC_DIRS := rtl/inc
 

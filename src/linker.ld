@@ -40,4 +40,11 @@ SECTIONS {
     PROVIDE(ld_rodata_lma = LOADADDR(.rodata));
     PROVIDE(ld_rodata_vma = ADDR(.rodata));
     PROVIDE(ld_rodata_size = SIZEOF(.rodata));
+
+    .data : ALIGN(4) {
+        *(.data*)
+    } >rom AT>rom
+    PROVIDE(ld_rodata_lma = LOADADDR(.data));
+    PROVIDE(ld_rodata_vma = ADDR(.data));
+    PROVIDE(ld_rodata_size = SIZEOF(.data));
 }

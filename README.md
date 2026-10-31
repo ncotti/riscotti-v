@@ -1,6 +1,8 @@
 # riscotti-v
 RISC-V core implementation
 
+sudo apt install gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf
+
 ## RISCV GCC
 
 Follow the Cotti-docs documentation and install CRossTool NG.

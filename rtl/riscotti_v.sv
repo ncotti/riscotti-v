@@ -28,6 +28,8 @@ module riscotti_v (
     store_mode_t store_mode;
     load_mode_t load_mode;
 
+    logic [31:0] pc_instr;
+
     decoder decoder_i (
         .op(instruction),
         .alu_mode(alu_mode),
@@ -62,7 +64,7 @@ module riscotti_v (
         .rs2(rs2)
     );
 
-    assign alu_op1 = (branch_mode != BM_NONE) ? pc : rs1;
+    assign alu_op1 = (branch_mode != BM_NONE) ? pc_instr : rs1;
     assign alu_op2 = (valid_imm) ? imm : rs2;
 
     always_comb begin
@@ -98,12 +100,15 @@ module riscotti_v (
     always_ff @(posedge clk) begin
         if (!rstN) begin
             pc <= '0;
+            pc_instr <= '0;
         end else begin
             if (branch_enable) begin
                 pc <= alu_out;
             end else begin
                 pc <= pc + 4;
             end
+
+            pc_instr <= pc;
         end
     end
 
