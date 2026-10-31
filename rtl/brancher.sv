@@ -1,5 +1,13 @@
 `include "isa.svh"
 
+/// @brief Decides whether a branch instruction should "branch", i.e., update
+/// the program counter to a new arbitrary address, provided by the
+/// instruction.
+///
+/// @param branch_mode Type of branch operation requested.
+/// @param rs1 Source register 1.
+/// @param rs2 Source register 2.
+/// @param branch_enable Whether the branch condition is met or not.
 module brancher
     import isa::*;
 (
@@ -11,23 +19,14 @@ module brancher
 
     timeunit 1ns; timeprecision 1ns;
 
-    logic rs_eq, rs_ne, rs_lt, rs_ge, rs_ltu, rs_geu;
-
-    assign rs_eq  = rs1 == rs2;
-    assign rs_ne  = rs1 != rs2;
-    assign rs_lt  = rs1 < rs2;
-    assign rs_ge  = rs1 >= rs2;
-    assign rs_ltu = unsigned'(rs1) < unsigned'(rs2);
-    assign rs_geu = unsigned'(rs1) >= unsigned'(rs2);
-
     always_comb begin
         case (branch_mode)
-            BM_EQ:   branch_enable = rs_eq;
-            BM_NE:   branch_enable = rs_ne;
-            BM_LT:   branch_enable = rs_lt;
-            BM_GE:   branch_enable = rs_ge;
-            BM_LTU:  branch_enable = rs_ltu;
-            BM_GEU:  branch_enable = rs_geu;
+            BM_EQ:   branch_enable = rs1 == rs2;
+            BM_NE:   branch_enable = rs1 != rs2;
+            BM_LT:   branch_enable = rs1 < rs2;
+            BM_GE:   branch_enable = rs1 >= rs2;
+            BM_LTU:  branch_enable = unsigned'(rs1) < unsigned'(rs2);
+            BM_GEU:  branch_enable = unsigned'(rs1) >= unsigned'(rs2);
             default: branch_enable = '0;
         endcase
     end
