@@ -28,7 +28,7 @@
 /// If an unaligned memory address was specified, e.g., 0x102, the returned
 /// value will be the value from 0x100, and the user should read the third
 /// byte from `rdata`.
-module ram_sp #(
+module ram_single_port #(
     int ADDR_WIDTH_BYTES = 5
 ) (
     input logic clk,
@@ -64,4 +64,4 @@ module ram_sp #(
     logic _unused_ok;
     assign _unused_ok = & addr[1:0];
 
-endmodule : ram_sp
+endmodule : ram_single_port
