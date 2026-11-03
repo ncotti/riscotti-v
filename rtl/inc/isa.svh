@@ -136,7 +136,7 @@ package isa;
 
         OP_ECALL  = {Funct7Width'(8'h00), Funct3Width'(4'h0), I_TYPE_ENV},
         OP_EBREAK = {Funct7Width'(8'h01), Funct3Width'(4'h0), I_TYPE_ENV},
-        OP_FENCE  = {Funct7Width'(8'h00), Funct3Width'(4'h0), FENCE}
+        OP_FENCE  = {Funct7Width'(8'h00), Funct3Width'(4'h0), FENCE_TYPE}
     } op_t;
 
 endpackage : isa

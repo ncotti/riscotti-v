@@ -26,6 +26,14 @@ package data_types;
         ALU_MULHU = 5'd17
     } alu_mode_t;
 
+    /// @brief Tells the memory that it should be accessed as a 1-byte, 2-byte
+    /// or 4-byte manner.
+    typedef enum logic [2:0] {
+        MEM_BYTE = 3'b001,
+        MEM_HALF = 3'b010,
+        MEM_WORD = 3'b100
+    } mem_access_mode_t;
+
 endpackage : data_types
 
 `endif  // ALU_H_

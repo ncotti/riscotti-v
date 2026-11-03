@@ -5,7 +5,7 @@
 /// and returns all valid information about it.
 ///
 /// @param op RV32IM instruction.
-/// @param valid_op Whether the `op` argument is a valid RV32IM instruction or not.
+/// @param op_valid Whether the `op` argument is a valid RV32IM instruction or not.
 /// @param alu_mode ALU operation to be performed for this instruction.
 /// @param rs1_idx Source 1 register index. It is always the first ALU
 /// operator.
@@ -25,7 +25,7 @@ module instruction_decoder
     import isa::*;
 (
     input logic [31:0] op,
-    output logic valid_op,
+    output logic op_valid,
     output alu_mode_t alu_mode,
     output logic [4:0] rs1_idx,
     output logic [4:0] rs2_idx,
@@ -59,7 +59,7 @@ module instruction_decoder
     assign branch_mode = (opcode == B_TYPE) ? branch_mode_t'(funct3) : BM_NONE;
 
     always_comb begin
-        valid_op = 1'b1;
+        op_valid = 1'b1;
         alu_mode = ALU_ADD;
 
         case (opcode)
@@ -88,7 +88,7 @@ module instruction_decoder
                     RM_DIVU: alu_mode = ALU_DIVU;
                     RM_REM: alu_mode = ALU_REM;
                     RM_REMU: alu_mode = ALU_REMU;
-                    default: valid_op = 1'b0;
+                    default: op_valid = 1'b0;
                 endcase
             end
             I_TYPE_ALU: begin
@@ -100,7 +100,7 @@ module instruction_decoder
                     {20'b0, op[31:20]} : {27'b0, op[24:20]};
 
                 // For SLL and SRX, funct7 must be exactly 0x00 or 0x20.
-                valid_op = !((ialu_mode == IALU_SLL && funct7 != 0) ||
+                op_valid = !((ialu_mode == IALU_SLL && funct7 != 0) ||
                     (ialu_mode == IALU_SRX && !(funct7 == 0 || funct7 == 'h20)));
 
                 unique case (ialu_mode)
@@ -127,8 +127,8 @@ module instruction_decoder
                 // LM_X enum, not only the `LM_NONE`, are invalid
                 // instructions.
                 case (load_mode_t'(funct3))
-                    LM_B, LM_H, LM_W, LM_BU, LM_HU: valid_op = 1'b1;
-                    default: valid_op = 1'b0;
+                    LM_B, LM_H, LM_W, LM_BU, LM_HU: op_valid = 1'b1;
+                    default: op_valid = 1'b0;
                 endcase
             end
             I_TYPE_JUMP: begin
@@ -158,8 +158,8 @@ module instruction_decoder
                 // SM_X enum, not only the `SM_NONE`, are invalid
                 // instructions.
                 case (store_mode_t'(funct3))
-                    SM_B, SM_H, SM_W: valid_op = 1'b1;
-                    default: valid_op = 1'b0;
+                    SM_B, SM_H, SM_W: op_valid = 1'b1;
+                    default: op_valid = 1'b0;
                 endcase
             end
             B_TYPE: begin
@@ -175,8 +175,8 @@ module instruction_decoder
                 // BM_X enum, not only the `SM_NONE`, are invalid
                 // instructions.
                 case (branch_mode_t'(funct3))
-                    BM_EQ, BM_NE, BM_LT, BM_GE, BM_LTU, BM_GEU: valid_op = 1'b1;
-                    default: valid_op = 1'b0;
+                    BM_EQ, BM_NE, BM_LT, BM_GE, BM_LTU, BM_GEU: op_valid = 1'b1;
+                    default: op_valid = 1'b0;
                 endcase
             end
             U_TYPE1, U_TYPE2: begin
@@ -205,7 +205,7 @@ module instruction_decoder
                 rs1_idx = '0;
                 rs2_idx = '0;
                 rd_idx = '0;
-                valid_op = 1'b0;
+                op_valid = 1'b0;
                 imm_enable = 0;
                 imm = '0;
             end
