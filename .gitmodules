@@ -1,3 +1,6 @@
 [submodule "cotti-make"]
 	path = cotti-make
 	url = git@github.com:ncotti/cotti-make.git
+[submodule "cotti-modules"]
+	path = cotti-modules
+	url = git@github.com:ncotti/cotti-modules.git
