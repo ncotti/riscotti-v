@@ -1,13 +1,16 @@
 
 /// @brief Updates the program counter (PC).
 ///
+/// The program counter holds the memory byte-address of the instruction
+/// to be fetched from ROM.
+///
 /// @param clk Clock signal.
 /// @param rstN Negative asserted reset signal.
 /// @param branch_enable When "1", the program counter will be set to
 /// "branch_addr".
 /// @param branch_addr When "branch_enable == 1", the program counter will
 /// be set to this value in the next clock cycle.
-/// @param pc Program counter.
+/// @param pc Program counter (byte-address).
 module pc_selector(
     input logic clk,
     input logic rstN,
@@ -15,6 +18,8 @@ module pc_selector(
     input logic [31:0] branch_addr,
     output logic [31:0] pc
 );
+
+    timeunit 1ns; timeprecision 1ns;
 
 always_ff @(posedge clk) begin
     if (!rstN) begin

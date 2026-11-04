@@ -46,8 +46,8 @@ async def test_r_instructions(dut):
         assert dut.rs1_idx.value == index + 1
         assert dut.rs2_idx.value == index + 2
         assert dut.imm.value == 0
-        assert dut.valid_imm.value == 0
-        assert dut.valid_op.value == 1
+        assert dut.imm_enable.value == 0
+        assert dut.op_valid.value == 1
 
 
 @cocotb.test
@@ -87,8 +87,8 @@ async def test_m_extension_instructions(dut):
         assert dut.rs1_idx.value == index + 1
         assert dut.rs2_idx.value == index + 2
         assert dut.imm.value == 0
-        assert dut.valid_imm.value == 0
-        assert dut.valid_op.value == 1
+        assert dut.imm_enable.value == 0
+        assert dut.op_valid.value == 1
 
 
 @cocotb.test
@@ -130,8 +130,8 @@ async def test_i_alu_instructions(dut):
         assert dut.rs1_idx.value == index + 1
         assert dut.rs2_idx.value == 0
         assert dut.imm.value == index + 2
-        assert dut.valid_imm.value == 1
-        assert dut.valid_op.value == 1
+        assert dut.imm_enable.value == 1
+        assert dut.op_valid.value == 1
 
 
 @cocotb.test
@@ -155,8 +155,8 @@ async def test_load_instructions(dut):
         assert dut.rs1_idx.value == index + 1
         assert dut.rs2_idx.value == 0
         assert dut.imm.value == index + 2
-        assert dut.valid_imm.value == 1
-        assert dut.valid_op.value == 1
+        assert dut.imm_enable.value == 1
+        assert dut.op_valid.value == 1
 
 
 @cocotb.test
@@ -178,8 +178,8 @@ async def test_store_instructions(dut):
         assert dut.rs1_idx.value == index + 1
         assert dut.rs2_idx.value == index
         assert dut.imm.value == index + 2
-        assert dut.valid_imm.value == 1
-        assert dut.valid_op.value == 1
+        assert dut.imm_enable.value == 1
+        assert dut.op_valid.value == 1
 
 
 @cocotb.test
@@ -206,8 +206,8 @@ async def test_branch_instructions(dut):
         assert dut.rs1_idx.value == index
         assert dut.rs2_idx.value == index + 1
         assert dut.imm.value == (index + 2 + (index % 2))
-        assert dut.valid_imm.value == 1
-        assert dut.valid_op.value == 1
+        assert dut.imm_enable.value == 1
+        assert dut.op_valid.value == 1
 
 
 @cocotb.test

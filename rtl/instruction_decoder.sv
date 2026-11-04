@@ -2,13 +2,12 @@
 `include "data_types.svh"
 
 /// @brief Given a valid RV32IM instruction, decodes the instruction
-/// and returns all valid information about it.
+/// and returns all required information to execute it in the next stage.
 ///
 /// @param op RV32IM instruction.
 /// @param op_valid Whether the `op` argument is a valid RV32IM instruction or not.
 /// @param alu_mode ALU operation to be performed for this instruction.
-/// @param rs1_idx Source 1 register index. It is always the first ALU
-/// operator.
+/// @param rs1_idx Source 1 register index.
 /// @param rs2_idx Source 2 register index.
 /// @param rd_idx Destination register index.
 /// @param imm Immediate value.
@@ -52,7 +51,7 @@ module instruction_decoder
     assign funct7 = op[31:25];
 
     assign r_mode = r_mode_t'({funct7, funct3});
-    assign ialu_mode = ialu_mode'(funct3);
+    assign ialu_mode = ialu_mode_t'(funct3);
 
     assign load_mode = (opcode == I_TYPE_LOAD) ? load_mode_t'(funct3) : LM_NONE;
     assign store_mode = (opcode == S_TYPE) ? store_mode_t'(funct3) : SM_NONE;
@@ -96,7 +95,7 @@ module instruction_decoder
                 rs2_idx = '0;
                 rd_idx = op[11:7];
                 imm_enable = 1;
-                imm = (ialu_mode != IALU_SLL || ialu_mode != IALU_SRX) ?
+                imm = (ialu_mode != IALU_SLL && ialu_mode != IALU_SRX) ?
                     {20'b0, op[31:20]} : {27'b0, op[24:20]};
 
                 // For SLL and SRX, funct7 must be exactly 0x00 or 0x20.

@@ -37,23 +37,25 @@ module riscotti_v (
     timeunit 1ns; timeprecision 1ns;
 
     logic branch_enable_ex, branch_enable_mem;
-    logic [31:0] branch_addr_ex, branch_enable_mem;
+    logic [31:0] branch_addr_ex, branch_addr_mem;
 
     logic [4:0] rs1_idx_id, rs2_idx_id;
-    logic [4:0] rd_idx_id, rd_idx_ex, rd_idx_mem, rd_idx_wb;
+    /* verilator lint_off UNUSEDSIGNAL */ /* verilator lint_off UNDRIVEN */
+    logic [4:0] rd_idx_id, rd_idx_wb;
     logic [31:0] imm_id, imm_ex;
     logic imm_enable_id, imm_enable_ex;
-    load_mode_t load_mode_id, load_mode_ex, load_mode_mem, load_mode_wb;
-    store_mode_t store_mode_id, load_mode_ex, store_mode_mem;
+    load_mode_t load_mode_id, load_mode_ex, load_mode_wb;
+    store_mode_t store_mode_id, store_mode_ex;
     branch_mode_t branch_mode_id, branch_mode_ex;
 
-    logic pc_id, pc_ex;
+    logic [31:0] pc_id, pc_ex;
 
-    logic [31:0] rs1_ex, rs2_ex;
+    logic [31:0] rs1_ex, rs2_ex, rs2_mem;
     logic [31:0] rd_wb;
 
     alu_mode_t alu_mode_id, alu_mode_ex;
-    logic [31:0] alu_op2, alu_out;
+    logic [31:0] alu_op2_ex;
+    logic [31:0] alu_out_ex, alu_out_mem, alu_out_wb;
 
     //-------------------------------------------------------------------------
     // IF
@@ -80,7 +82,7 @@ module riscotti_v (
 
     // TODO valid_op as an exception
     instruction_decoder instruction_decoder_i (
-        .op(op),
+        .op(op_id),
         /* verilator lint_off PINCONNECTEMPTY */
         .op_valid(),
         .alu_mode(alu_mode_id),
@@ -112,12 +114,12 @@ module riscotti_v (
     always_ff @(posedge clk) begin
         if (!rstN) begin
             pc_ex <= '0;
-            branch_mode_ex <= '0;
+            branch_mode_ex <= BM_NONE;
             imm_ex <= '0;
             imm_enable_ex <= '0;
-            alu_mode_ex <= '0;
-            load_mode_ex <= '0;
-            store_mode_ex <= '0;
+            alu_mode_ex <= ALU_ADD;
+            load_mode_ex <= LM_NONE;
+            store_mode_ex <= SM_NONE;
         end else begin
             pc_ex <= pc_id;
             branch_mode_ex <= branch_mode_id;
@@ -130,7 +132,7 @@ module riscotti_v (
     end
 
     assign alu_op2_ex = (imm_enable_ex) ? imm_ex : rs2_ex;
-    assign branch_addr_ex = pc_ex + imm;
+    assign branch_addr_ex = pc_ex + imm_ex;
 
     alu alu_i (
         .op1(rs1_ex),
@@ -158,8 +160,8 @@ module riscotti_v (
             branch_enable_mem <= '0;
             alu_out_mem <= '0;
             rs2_mem <= '0;
-            load_mode_mem <= '0;
-            store_mode_mem <= '0;
+            load_mode_mem <= LM_NONE;
+            store_mode_mem <= SM_NONE;
         end else begin
             branch_addr_mem <= branch_addr_ex;
             branch_enable_mem <= branch_enable_ex;
@@ -178,7 +180,7 @@ module riscotti_v (
     //-------------------------------------------------------------------------
     always_ff @(posedge clk) begin
         if (!rstN) begin
-            load_mode_wb <= '0;
+            load_mode_wb <= LM_NONE;
             alu_out_wb <= '0;
         end else begin
             load_mode_wb <= load_mode_mem;
