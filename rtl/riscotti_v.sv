@@ -22,43 +22,50 @@
 module riscotti_v (
     input logic clk,
     input logic rstN,
-    input logic [31:0] op_id,
-    input logic [31:0] rdata_wb,
-    output logic [31:0] pc_if,
-    output logic [31:0] wdata_mem,
-    output logic [31:0] addr_mem,
-    output logic [3:0] we_mem,
-    output load_mode_t load_mode_mem
+    input logic [31:0] op,
+    input logic [31:0] rdata,
+    output logic [31:0] pc,
+    output logic [31:0] wdata,
+    output logic [31:0] addr,
+    output logic [3:0] we
 );
-
     import data_types::*;
     import isa::*;
 
     timeunit 1ns; timeprecision 1ns;
 
-    logic branch_enable_ex, branch_enable_mem;
-    logic [31:0] branch_addr_ex, branch_addr_mem;
-
-    logic [4:0] rs1_idx_id, rs2_idx_id;
-    /* verilator lint_off UNUSEDSIGNAL */ /* verilator lint_off UNDRIVEN */
-    logic [4:0] rd_idx_id, rd_idx_wb;
+    logic [31:0] pc_if, pc_id, pc_ex;
+    logic [31:0] op_id;
+    logic [4:0] rs1_idx_id;
+    logic [4:0] rs2_idx_id;
+    branch_mode_t branch_mode_id, branch_mode_ex;
     logic [31:0] imm_id, imm_ex;
     logic imm_enable_id, imm_enable_ex;
-    load_mode_t load_mode_id, load_mode_ex, load_mode_wb;
-    logic [3:0] we_id, we_ex;
-    branch_mode_t branch_mode_id, branch_mode_ex;
-
-    logic [31:0] pc_id, pc_ex;
-
-    logic [31:0] rs1_ex, rs2_ex, rs2_mem;
-    logic [31:0] rd_wb;
-
     alu_mode_t alu_mode_id, alu_mode_ex;
+    load_mode_t load_mode_id, load_mode_ex, load_mode_mem, load_mode_wb;
+    logic [3:0] we_id, we_ex, we_mem;
+    logic [4:0] rd_idx_id, rd_idx_ex, rd_idx_mem, rd_idx_wb;
+    logic [31:0] rs1_ex;
+    logic [31:0] rs2_ex, rs2_mem;
     logic [31:0] alu_op2_ex;
+    logic branch_enable_ex, branch_enable_mem;
+    logic [31:0] branch_addr_ex, branch_addr_mem;
     logic [31:0] alu_out_ex, alu_out_mem, alu_out_wb;
+    logic [31:0] rd_wb;
+    logic [31:0] rdata_wb;
+    logic [31:0] wdata_mem;
+    logic [31:0] addr_mem;
+
+    // Rename input signals with their pipeline-stage names
+    assign op_id = op;
+    assign rdata_wb = rdata;
+    assign pc = pc_if;
+    assign wdata = wdata_mem;
+    assign addr = addr_mem;
+    assign we = we_mem;
 
     //-------------------------------------------------------------------------
-    // IF
+    // IF: Instruction Fetch
     //-------------------------------------------------------------------------
     pc_selector pc_selector_i (
         .clk(clk),
@@ -69,7 +76,7 @@ module riscotti_v (
     );
 
     //-------------------------------------------------------------------------
-    // ID
+    // ID: Instruction Decode
     //-------------------------------------------------------------------------
     // Register signals from IF to ID
     always_ff @(posedge clk) begin
@@ -120,6 +127,7 @@ module riscotti_v (
             alu_mode_ex <= ALU_ADD;
             load_mode_ex <= LM_NONE;
             we_ex <= 4'b0000;
+            rd_idx_ex <= '0;
         end else begin
             pc_ex <= pc_id;
             branch_mode_ex <= branch_mode_id;
@@ -128,12 +136,14 @@ module riscotti_v (
             alu_mode_ex <= alu_mode_id;
             load_mode_ex <= load_mode_id;
             we_ex <= we_id;
+            rd_idx_ex <= rd_idx_id;
         end
     end
 
     assign alu_op2_ex = (imm_enable_ex) ? imm_ex : rs2_ex;
     assign branch_addr_ex = pc_ex + imm_ex;
 
+    // TODO remove div_by_zero, maybe?
     alu alu_i (
         .op1(rs1_ex),
         .op2(alu_op2_ex),
@@ -162,6 +172,7 @@ module riscotti_v (
             rs2_mem <= '0;
             load_mode_mem <= LM_NONE;
             we_mem <= 4'b0000;
+            rd_idx_mem <= '0;
         end else begin
             branch_addr_mem <= branch_addr_ex;
             branch_enable_mem <= branch_enable_ex;
@@ -169,6 +180,7 @@ module riscotti_v (
             rs2_mem <= rs2_ex;
             load_mode_mem <= load_mode_ex;
             we_mem <= we_ex;
+            rd_idx_mem <= rd_idx_ex;
         end
     end
 
@@ -182,9 +194,11 @@ module riscotti_v (
         if (!rstN) begin
             load_mode_wb <= LM_NONE;
             alu_out_wb <= '0;
+            rd_idx_wb <= '0;
         end else begin
             load_mode_wb <= load_mode_mem;
             alu_out_wb <= alu_out_mem;
+            rd_idx_wb <= rd_idx_mem;
         end
     end
 
