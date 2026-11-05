@@ -15,8 +15,9 @@
 /// the `rs2`.
 /// @param load_mode Indicates whether the instruction loads a value from
 /// memory, or `LM_NONE`.
-/// @param store_mode Indicates whether the instruction stores a value to
-/// memory, or `SM_NONE`.
+/// @param we Write enable. Each bit indicates whether the given byte should be
+/// written into the memory. E.g.: `we = 0b0001` writes a byte, `we = 0b0011`
+/// writes a half-word and `we = 0b1111` writes a word.
 /// @param branch_mode Indicates whether the instruction is a branch for the
 /// program counter, or `BM_NONE`.
 module instruction_decoder
@@ -32,7 +33,7 @@ module instruction_decoder
     output logic [31:0] imm,
     output logic imm_enable,
     output load_mode_t load_mode,
-    output store_mode_t store_mode,
+    output logic [3:0] we,
     output branch_mode_t branch_mode
 );
     import isa::*;
@@ -54,12 +55,12 @@ module instruction_decoder
     assign ialu_mode = ialu_mode_t'(funct3);
 
     assign load_mode = (opcode == I_TYPE_LOAD) ? load_mode_t'(funct3) : LM_NONE;
-    assign store_mode = (opcode == S_TYPE) ? store_mode_t'(funct3) : SM_NONE;
     assign branch_mode = (opcode == B_TYPE) ? branch_mode_t'(funct3) : BM_NONE;
 
     always_comb begin
         op_valid = 1'b1;
         alu_mode = ALU_ADD;
+        we = 4'b0000;
 
         case (opcode)
             R_TYPE: begin
@@ -156,9 +157,23 @@ module instruction_decoder
                 // because all combinations that are not part of the
                 // SM_X enum, not only the `SM_NONE`, are invalid
                 // instructions.
-                case (store_mode_t'(funct3))
-                    SM_B, SM_H, SM_W: op_valid = 1'b1;
-                    default: op_valid = 1'b0;
+                case (funct3)
+                    SM_B: begin
+                        op_valid = 1'b1;
+                        we = 4'b0001;
+                    end
+                    SM_H: begin
+                        op_valid = 1'b1;
+                        we = 4'b0011;
+                    end
+                    SM_W: begin
+                        op_valid = 1'b1;
+                        we = 4'b1111;
+                    end
+                    default: begin
+                        op_valid = 1'b0;
+                        we = 4'b0000;
+                    end
                 endcase
             end
             B_TYPE: begin

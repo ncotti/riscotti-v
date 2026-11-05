@@ -49,8 +49,7 @@ package isa;
     typedef enum logic [Funct3Width-1:0] {
         SM_B = 3'h0,
         SM_H = 3'h1,
-        SM_W = 3'h2,
-        SM_NONE = 3'h7
+        SM_W = 3'h2
     } store_mode_t;
 
     /// @brief Possible types of load instructions (LM = load mode).

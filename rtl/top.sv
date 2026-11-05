@@ -27,8 +27,8 @@ module top #(
         .ROM_FILE  (ROM_FILE)
     ) rom_i (
         .clk (clk),
-        .addr(rom_addr),
-        .dread(rom_data)
+        .raddr(rom_addr),
+        .rdata(rom_data)
     );
 
     /* verilator lint_off PINCONNECTEMPTY */
@@ -42,7 +42,6 @@ module top #(
         .waddr(),
         .we(),
         .wdata(),
-        .wstrb(),
         .rdata(ram_dout)
     );
 
@@ -56,7 +55,7 @@ module top #(
         /* verilator lint_off PINCONNECTEMPTY */
         .addr_mem(),
         /* verilator lint_off PINCONNECTEMPTY */
-        .store_mode_mem(),
+        .we_mem(),
         /* verilator lint_off PINCONNECTEMPTY */
         .load_mode_mem()
     );

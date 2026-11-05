@@ -21,3 +21,21 @@ class AluMode(IntEnum):
     REMU = 16
     MULHU = 17
     INVALID = 18
+
+
+class LoadMode(IntEnum):
+    LM_B = 0
+    LM_H = 1
+    LM_W = 2
+    LM_BU = 4
+    LM_HU = 5
+    LM_NONE = 7
+
+class BranchMode(IntEnum):
+    BM_EQ   = 0
+    BM_NE   = 1
+    BM_NONE = 2
+    BM_LT   = 4
+    BM_GE   = 5
+    BM_LTU  = 6
+    BM_GEU  = 7

@@ -27,7 +27,7 @@ module riscotti_v (
     output logic [31:0] pc_if,
     output logic [31:0] wdata_mem,
     output logic [31:0] addr_mem,
-    output store_mode_t store_mode_mem,
+    output logic [3:0] we_mem,
     output load_mode_t load_mode_mem
 );
 
@@ -45,7 +45,7 @@ module riscotti_v (
     logic [31:0] imm_id, imm_ex;
     logic imm_enable_id, imm_enable_ex;
     load_mode_t load_mode_id, load_mode_ex, load_mode_wb;
-    store_mode_t store_mode_id, store_mode_ex;
+    logic [3:0] we_id, we_ex;
     branch_mode_t branch_mode_id, branch_mode_ex;
 
     logic [31:0] pc_id, pc_ex;
@@ -92,7 +92,7 @@ module riscotti_v (
         .imm(imm_id),
         .imm_enable(imm_enable_id),
         .load_mode(load_mode_id),
-        .store_mode(store_mode_id),
+        .we(we_id),
         .branch_mode(branch_mode_id)
     );
 
@@ -119,7 +119,7 @@ module riscotti_v (
             imm_enable_ex <= '0;
             alu_mode_ex <= ALU_ADD;
             load_mode_ex <= LM_NONE;
-            store_mode_ex <= SM_NONE;
+            we_ex <= 4'b0000;
         end else begin
             pc_ex <= pc_id;
             branch_mode_ex <= branch_mode_id;
@@ -127,7 +127,7 @@ module riscotti_v (
             imm_enable_ex <= imm_enable_id;
             alu_mode_ex <= alu_mode_id;
             load_mode_ex <= load_mode_id;
-            store_mode_ex <= store_mode_id;
+            we_ex <= we_id;
         end
     end
 
@@ -161,14 +161,14 @@ module riscotti_v (
             alu_out_mem <= '0;
             rs2_mem <= '0;
             load_mode_mem <= LM_NONE;
-            store_mode_mem <= SM_NONE;
+            we_mem <= 4'b0000;
         end else begin
             branch_addr_mem <= branch_addr_ex;
             branch_enable_mem <= branch_enable_ex;
             alu_out_mem <= alu_out_ex;
             rs2_mem <= rs2_ex;
             load_mode_mem <= load_mode_ex;
-            store_mode_mem <= store_mode_ex;
+            we_mem <= we_ex;
         end
     end
 

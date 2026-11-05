@@ -48,6 +48,9 @@ async def test_r_instructions(dut):
         assert dut.imm.value == 0
         assert dut.imm_enable.value == 0
         assert dut.op_valid.value == 1
+        assert dut.we.value == 0
+        assert dut.load_mode.value == LoadMode.LM_NONE
+        assert dut.branch_mode.value == BranchMode.BM_NONE
 
 
 @cocotb.test
@@ -89,6 +92,9 @@ async def test_m_extension_instructions(dut):
         assert dut.imm.value == 0
         assert dut.imm_enable.value == 0
         assert dut.op_valid.value == 1
+        assert dut.we.value == 0
+        assert dut.load_mode.value == LoadMode.LM_NONE
+        assert dut.branch_mode.value == BranchMode.BM_NONE
 
 
 @cocotb.test
@@ -132,6 +138,9 @@ async def test_i_alu_instructions(dut):
         assert dut.imm.value == index + 2
         assert dut.imm_enable.value == 1
         assert dut.op_valid.value == 1
+        assert dut.we.value == 0
+        assert dut.load_mode.value == LoadMode.LM_NONE
+        assert dut.branch_mode.value == BranchMode.BM_NONE
 
 
 @cocotb.test
@@ -144,8 +153,16 @@ async def test_load_instructions(dut):
         riscv_lhu,
     ]
 
+    expected_load_mode = [
+        LoadMode.LM_B,
+        LoadMode.LM_H,
+        LoadMode.LM_W,
+        LoadMode.LM_BU,
+        LoadMode.LM_HU
+    ]
+
     index = 0
-    for instruction in riscv_instructions:
+    for (instruction, load_mode) in zip(riscv_instructions, expected_load_mode):
         index = index + 1
         dut.op.value = instruction(index, index + 1, index + 2)
 
@@ -157,6 +174,10 @@ async def test_load_instructions(dut):
         assert dut.imm.value == index + 2
         assert dut.imm_enable.value == 1
         assert dut.op_valid.value == 1
+        assert dut.we.value == 0
+        assert dut.load_mode.value == load_mode
+        assert dut.branch_mode.value == BranchMode.BM_NONE
+
 
 
 @cocotb.test
@@ -167,8 +188,14 @@ async def test_store_instructions(dut):
         riscv_sw,
     ]
 
+    expected_we = [
+        0b0001,
+        0b0011,
+        0b1111
+    ]
+
     index = 0
-    for instruction in riscv_instructions:
+    for (instruction, we) in zip(riscv_instructions, expected_we):
         index = index + 1
         dut.op.value = instruction(index, index + 1, index + 2)
 
@@ -180,7 +207,9 @@ async def test_store_instructions(dut):
         assert dut.imm.value == index + 2
         assert dut.imm_enable.value == 1
         assert dut.op_valid.value == 1
-
+        assert dut.we.value == we
+        assert dut.load_mode.value == LoadMode.LM_NONE
+        assert dut.branch_mode.value == BranchMode.BM_NONE
 
 @cocotb.test
 async def test_branch_instructions(dut):
@@ -193,8 +222,17 @@ async def test_branch_instructions(dut):
         riscv_bgeu,
     ]
 
+    expected_branches = [
+        BranchMode.BM_EQ,
+        BranchMode.BM_NE,
+        BranchMode.BM_LT,
+        BranchMode.BM_GE,
+        BranchMode.BM_LTU,
+        BranchMode.BM_GEU
+    ]
+
     index = 0
-    for instruction in riscv_instructions:
+    for (instruction, branch_mode) in zip(riscv_instructions, expected_branches):
         index = index + 1
 
         # Note, offset can only be even
@@ -208,6 +246,9 @@ async def test_branch_instructions(dut):
         assert dut.imm.value == (index + 2 + (index % 2))
         assert dut.imm_enable.value == 1
         assert dut.op_valid.value == 1
+        assert dut.we.value == 0
+        assert dut.load_mode.value == LoadMode.LM_NONE
+        assert dut.branch_mode.value == branch_mode
 
 
 @cocotb.test
