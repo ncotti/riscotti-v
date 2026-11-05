@@ -1,0 +1,452 @@
+import cocotb
+from cocotb.triggers import Timer, RisingEdge
+from cocotb.clock import Clock
+
+from common.riscv_instructions import *
+from common.data_types import *
+
+REGISTER_LADDER_VALUES = [
+    0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
+    16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
+]
+
+async def reset(dut):
+    c = Clock(dut.clk, 10, "ns")
+    c.start()
+
+    dut.rstN.value = 1
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    dut.rstN.value = 0
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    dut.rstN.value = 1
+
+
+async def register_preload(dut, register_values: list):
+    for i in range(32):
+        dut.op.value = riscv_addi(i, 0, register_values[i])
+        await RisingEdge(dut.clk)
+
+    # Flush pipeline
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)   # ID -> EX
+    await RisingEdge(dut.clk)   # EX -> MEM
+    await RisingEdge(dut.clk)   # MEM -> WB
+
+@cocotb.test
+async def test_imm_math(dut):
+    await reset(dut)
+    await register_preload(dut, REGISTER_LADDER_VALUES)
+
+    instructions = [
+        riscv_addi(1, 2, 0x53),
+        riscv_xori(3, 4, 0xFF),
+        riscv_ori(5, 6, 0x10),
+        riscv_andi(7, 8, 0xFF),
+        riscv_slli(9, 10, 3),
+        riscv_srli(11, 12, 1),
+        riscv_srai(13, 14, 2),
+        riscv_slti(15, 16, 17),
+        riscv_sltiu(17, 18, 18),
+        riscv_nop(),
+    ]
+
+    expected_values = [
+        0,  # ID -> EX
+        0x53 + 2,
+        4 ^ 0xFF,
+        6 | 0x10,
+        8 & 0xFF,
+        10 << 3,
+        12 >> 1,
+        14 >> 2,
+        0x01,
+        0x00
+    ]
+
+    for op, value in zip(instructions, expected_values):
+        dut.op.value = op
+
+        await RisingEdge(dut.clk)
+        await Timer(1, "ns")
+        assert dut.we.value == 0
+        assert dut.addr.value == value
+
+@cocotb.test
+async def test_register_math(dut):
+    await reset(dut)
+    await register_preload(dut, REGISTER_LADDER_VALUES)
+
+    instructions = [
+        riscv_add(31, 31, 30),
+        riscv_sub(29, 29, 28),
+        riscv_xor(27, 27, 26),
+        riscv_or(25, 25, 24),
+        riscv_and(23, 23, 22),
+        riscv_mul(21, 21, 20),
+        riscv_mulh(19, 19, 18),
+        riscv_mulhsu(17, 17, 16),
+        riscv_mulhu(15, 15, 14),
+        riscv_div(13, 13, 12),
+        riscv_divu(11, 11, 10),
+        riscv_rem(9, 9, 8),
+        riscv_remu(7, 7, 6),
+        riscv_sll(5, 5, 4),
+        riscv_srl(3, 3, 2),
+        riscv_sra(1, 1, 0),
+        riscv_slt(0, 0, 11),
+        riscv_sltu(0, 11, 0),
+        riscv_nop(),
+    ]
+
+    expected_values = [
+        0,  # ID -> EX
+        31+30,
+        29-28,
+        27 ^ 26,
+        25|24,
+        23 & 22,
+        21 * 20,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        5 << 4,
+        3 >> 2,
+        1 >> 0,
+        1,
+        0
+    ]
+
+    for op, value in zip(instructions, expected_values):
+        dut.op.value = op
+
+        await RisingEdge(dut.clk)
+        await Timer(1, "ns")
+        assert dut.we.value == 0
+        assert dut.addr.value == value
+
+
+
+
+@cocotb.test
+async def test_load_instructions(dut):
+    await reset(dut)
+    await register_preload(dut, REGISTER_LADDER_VALUES)
+
+    ram = [
+        0xFFFFFFFF,
+        0x000000F9,
+        0x0000Fabc,
+        0xF1234567,
+        0x000000CC,
+        0x0000BEEF,
+    ]
+
+    instructions = [
+        riscv_lb(10, 4, 0),
+        riscv_lh(11, 4, 4),
+        riscv_lw(12, 4, 8),
+        riscv_lbu(13, 4, 12),
+        riscv_lhu(14, 4, 16),
+        riscv_addi(0, 10, 0),
+        riscv_addi(0, 11, 0),
+        riscv_addi(0, 12, 0),
+        riscv_addi(0, 13, 0),
+        riscv_addi(0, 14, 0),
+        riscv_nop(),
+    ]
+
+    expected_addr = [
+        0, # ID -> EX,
+        4,
+        8,
+        12,
+        16,
+        20,
+        (ram[1] & 0xFF) | 0xFFFFFF00,
+        (ram[2] & 0xFFFF) | 0xFFFF0000,
+        ram[3] & 0xFFFFFFFF,
+        ram[4] & 0xFF,
+        ram[5] & 0xFFFF
+    ]
+
+    rdata_wb = 0
+    for op, addr in zip(instructions, expected_addr):
+        dut.op.value = op
+
+        await RisingEdge(dut.clk)
+        await Timer(1, "ns")
+        assert dut.we.value == 0
+        assert dut.addr.value == addr
+
+        # The value from the RAM should be available on the next clock cycle
+        dut.rdata.value = rdata_wb
+
+        if (addr < len(ram) * 4):
+            rdata_wb = ram[addr >> 2]
+        else:
+            rdata_wb = 0
+
+
+@cocotb.test
+async def test_store_instruction(dut):
+    await reset(dut)
+
+    # Addi instructions only support up to 12 bits.
+    register_values = [
+        0,0xFAB,0xBCD,0x678,
+        4,5,6,7,8,9,10,11,12,13,14,15,
+        16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
+    ]
+    await register_preload(dut, register_values)
+
+    instructions = [
+        riscv_sb(1, 4, 8),
+        riscv_sh(2, 4, 12),
+        riscv_sw(3, 4, 16),
+        riscv_nop(),
+    ]
+
+    expected_addr = [
+        0, # ID -> EX,
+        12,
+        16,
+        20
+    ]
+
+    expected_wdata = [
+        0,
+        0xFAB,
+        0xBCD,
+        0x678
+    ]
+
+    expected_we = [
+        0,
+        0b0001,
+        0b0011,
+        0b1111
+    ]
+
+    for op, addr, wdata, we in zip(instructions, expected_addr, expected_wdata, expected_we):
+        dut.op.value = op
+
+        await RisingEdge(dut.clk)
+        await Timer(1, "ns")
+        await Timer(1, "ns")
+
+        assert dut.we.value == we
+        assert dut.addr.value == addr
+        assert dut.wdata.value == wdata
+
+@cocotb.test
+async def test_branch_instruction(dut):
+    await reset(dut)
+    assert dut.pc.value == 0
+
+    dut.op.value = riscv_nop()  # This instruction does not exist yet.
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    assert dut.pc.value == 4
+    dut.op.value = riscv_addi(1, 0, 10) # PC = 0
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    assert dut.pc.value == 8
+    dut.op.value = riscv_addi(2, 0, 20) # PC = 4
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Since the PC == 12, that means that the PC related to the branch
+    # instruction is PC - 4,
+    assert dut.pc.value == 12
+    dut.op.value = riscv_beq(0, 0, 32)  # PC = 8
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # ID -> EX
+    assert dut.pc.value == 16
+    dut.op.value = riscv_nop()  # PC = 12
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # EX -> MEM
+    assert dut.pc.value == 20
+    dut.op.value = riscv_nop()  # PC = 16
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # BEQ branch happened
+    assert dut.pc.value == 8 + 32
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Wait until the first address is read from the ROM
+    assert dut.pc.value == 12 + 32
+    dut.op.value = riscv_bne(1, 2, 32) # PC = 40
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # ID -> EX
+    assert dut.pc.value == 48
+    dut.op.value = riscv_nop() # PC = 44
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # EX -> MEM
+    assert dut.pc.value == 52
+    dut.op.value = riscv_nop() # PC = 48
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # BNE branch happened
+    assert dut.pc.value == 40 + 32
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Wait until the first address is read from the ROM
+    assert dut.pc.value == 44 + 32
+    dut.op.value = riscv_blt(1, 2, 32) # PC = 72
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # ID -> EX
+    assert dut.pc.value == 80
+    dut.op.value = riscv_nop() # PC = 76
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # EX -> MEM
+    assert dut.pc.value == 84
+    dut.op.value = riscv_nop() # PC = 80
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # BLT branch happened
+    assert dut.pc.value == 72 + 32
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Wait until the first address is read from the ROM
+    # Now, a branch conditions evaluated to false
+    assert dut.pc.value == 76 + 32
+    dut.op.value = riscv_beq(1, 2, 32) # PC 104
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # ID -> EX
+    assert dut.pc.value == 112
+    dut.op.value = riscv_nop() # 108
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # EX -> MEM
+    assert dut.pc.value == 116
+    dut.op.value = riscv_nop() # 112
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Branch did not happen
+    assert dut.pc.value == 120
+
+
+@cocotb.test
+async def test_load_upper_imm(dut):
+    await reset(dut)
+
+    # ID
+    dut.op.value = riscv_lui(1, 0x45678)
+
+    # EX
+    await RisingEdge(dut.clk)
+    # Use nops here, to not make a dependency of the next operation on the
+    # write-back of the previous one (register value is not updated, and is
+    # being used)
+    dut.op.value = riscv_nop()
+
+    # MEM
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+    assert dut.addr.value == 0x45678000
+
+    # WB
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # ID
+    dut.op.value = riscv_addi(1, 1, 0x123)
+    await RisingEdge(dut.clk)   # EX
+    await RisingEdge(dut.clk)   # MEM
+    await Timer(1, "ns")
+    await Timer(1, "ns")
+    assert dut.addr.value == 0x45678123
+
+
+
+@cocotb.test
+async def test_first_instruction_after_reset_is_not_executed(dut):
+    """After leaving the reset, the PC points to the address "0", but
+    the value from the ROM is not read until the next clock cycle. Therefore,
+    the first instruction read after reset is junk, and should not be used.
+    """
+    await reset(dut)
+    assert dut.pc.value == 0
+
+    # We just came back from reset, there should'nt be any instructions here,
+    # because the PC == 0, means that the instruction has not yet been read from
+    # ROM
+
+    # IF1
+    #       ID0
+    dut.op.value = riscv_addi(1, 0, 0x123)
+    await RisingEdge(dut.clk)
+
+    #       ID1
+    #           EX0
+    dut.op.value = riscv_addi(2, 0, 0x456)  # This should be the only valid
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    #           EX1
+    #               MEM0
+    assert dut.addr.value == 0
+    await RisingEdge(dut.clk)
+    await Timer(dut.clk)
+
+    #               MEM1
+    #                   WB0
+    assert dut.addr.value == 0x456
+
+
+
+@cocotb.test
+async def test_add_upper_imm_to_pc(dut):
+    await reset(dut)
+
+    assert dut.pc.value == 0
+    dut.op.value = riscv_nop()  # First instruction is not executed
+
+    await RisingEdge(dut.clk)   # PC = 0
+    await RisingEdge(dut.clk)   # PC = 4
+    await RisingEdge(dut.clk)   # PC = 8
+    await Timer(1, "ns")
+
+    # ID
+    assert dut.pc.value == 12
+    dut.op.value = riscv_auipc(1, 0x12345) # PC = 8
+
+    # EX, MEM
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    assert dut.addr.value == 0x12345008

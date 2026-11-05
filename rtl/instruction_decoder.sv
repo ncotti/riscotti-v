@@ -34,7 +34,8 @@ module instruction_decoder
     output logic imm_enable,
     output load_mode_t load_mode,
     output logic [3:0] we,
-    output branch_mode_t branch_mode
+    output branch_mode_t branch_mode,
+    output logic pc_enable
 );
     import isa::*;
 
@@ -68,6 +69,7 @@ module instruction_decoder
                 rs2_idx = op[24:20];
                 rd_idx = op[11:7];
                 imm_enable = 0;
+                pc_enable = 0;
                 imm = '0;
                 case (r_mode)
                     RM_ADD: alu_mode = ALU_ADD;
@@ -96,6 +98,7 @@ module instruction_decoder
                 rs2_idx = '0;
                 rd_idx = op[11:7];
                 imm_enable = 1;
+                pc_enable = 0;
                 imm = (ialu_mode != IALU_SLL && ialu_mode != IALU_SRX) ?
                     {20'b0, op[31:20]} : {27'b0, op[24:20]};
 
@@ -119,6 +122,7 @@ module instruction_decoder
                 rs2_idx = '0;
                 rd_idx = op[11:7];
                 imm_enable = 1;
+                pc_enable = 0;
                 imm = {20'b0, op[31:20]};
                 alu_mode = ALU_ADD;
 
@@ -136,6 +140,7 @@ module instruction_decoder
                 rs2_idx = '0;
                 rd_idx = op[11:7];
                 imm_enable = 1;
+                pc_enable = 1;
                 imm = (funct3 != 3'h5) ? {20'b0, op[31:20]} : {27'b0, op[24:20]};
             end
             I_TYPE_ENV: begin
@@ -143,6 +148,7 @@ module instruction_decoder
                 rs2_idx = '0;
                 rd_idx = op[11:7];
                 imm_enable = 1;
+                pc_enable = 0;
                 imm = (funct3 != 3'h5) ? {20'b0, op[31:20]} : {27'b0, op[24:20]};
             end
             S_TYPE: begin
@@ -150,6 +156,7 @@ module instruction_decoder
                 rs2_idx = op[24:20];
                 rd_idx = '0;
                 imm_enable = 1;
+                pc_enable = 0;
                 imm = {20'b0, op[31:25], op[11:7]};
                 alu_mode = ALU_ADD;
 
@@ -181,6 +188,7 @@ module instruction_decoder
                 rs2_idx = op[24:20];
                 rd_idx = '0;
                 imm_enable = 1;
+                pc_enable = 1;
                 imm = {19'b0, op[31], op[7], op[30:25], op[11:8], 1'b0};
                 alu_mode = ALU_ADD;
 
@@ -193,17 +201,28 @@ module instruction_decoder
                     default: op_valid = 1'b0;
                 endcase
             end
-            U_TYPE1, U_TYPE2: begin
+            U_TYPE_LUI: begin
                 rs1_idx = '0;
                 rs2_idx = '0;
                 rd_idx = op[11:7];
                 imm_enable = 1;
+                pc_enable = 0;
+                imm = {op[31:12], 12'b0};
+                alu_mode = ALU_ADD;
+            end
+            U_TYPE_AUIPC: begin
+                rs1_idx = '0;
+                rs2_idx = '0;
+                rd_idx = op[11:7];
+                imm_enable = 1;
+                pc_enable = 1;
                 imm = {op[31:12], 12'b0};
             end
             J_TYPE: begin
                 rs1_idx = '0;
                 rs2_idx = '0;
                 rd_idx = op[11:7];
+                pc_enable = 0;
                 imm_enable = 1;
                 imm = {11'b0, op[31], op[19:12], op[20], op[30:21], 1'b0};
             end
@@ -212,6 +231,7 @@ module instruction_decoder
                 rs2_idx = '0;
                 rd_idx = op[11:7];
                 imm_enable = 0;
+                pc_enable = 0;
                 imm = '0;
             end
 
@@ -221,6 +241,7 @@ module instruction_decoder
                 rd_idx = '0;
                 op_valid = 1'b0;
                 imm_enable = 0;
+                pc_enable = 0;
                 imm = '0;
             end
         endcase

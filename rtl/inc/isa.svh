@@ -23,8 +23,8 @@ package isa;
         I_TYPE_ENV = 7'b1110011,
         S_TYPE  = 7'b0100011,
         B_TYPE  = 7'b1100011,
-        U_TYPE1 = 7'b0110111,
-        U_TYPE2 = 7'b0010111,
+        U_TYPE_LUI = 7'b0110111,
+        U_TYPE_AUIPC = 7'b0010111,
         J_TYPE  = 7'b1101111,
         FENCE_TYPE   = 7'b0001111
     } opcode_t;
@@ -130,8 +130,8 @@ package isa;
         OP_JAL  = {Funct7Width'(8'h00), Funct3Width'(4'h0), J_TYPE},
         OP_JALR = {Funct7Width'(8'h00), Funct3Width'(4'h0), I_TYPE_JUMP},
 
-        OP_LUI   = {Funct7Width'(8'h00), Funct3Width'(4'h0), U_TYPE1},
-        OP_AUIPC = {Funct7Width'(8'h00), Funct3Width'(4'h0), U_TYPE2},
+        OP_LUI   = {Funct7Width'(8'h00), Funct3Width'(4'h0), U_TYPE_LUI},
+        OP_AUIPC = {Funct7Width'(8'h00), Funct3Width'(4'h0), U_TYPE_AUIPC},
 
         OP_ECALL  = {Funct7Width'(8'h00), Funct3Width'(4'h0), I_TYPE_ENV},
         OP_EBREAK = {Funct7Width'(8'h01), Funct3Width'(4'h0), I_TYPE_ENV},

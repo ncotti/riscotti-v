@@ -1,5 +1,5 @@
 module top #(
-    string ROM_FILE = "tb/rom_hex/rom.hex",
+    string ROM_FILE = "tb/rom.hex",
     int ADDR_WIDTH_WORDS = 10,
     int DATA_WIDTH = 32
 ) (

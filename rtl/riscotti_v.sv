@@ -35,6 +35,7 @@ module riscotti_v (
     timeunit 1ns; timeprecision 1ns;
 
     logic [31:0] pc_if, pc_id, pc_ex;
+    logic pc_enable_id, pc_enable_ex;
     logic [31:0] op_id;
     logic [4:0] rs1_idx_id;
     logic [4:0] rs2_idx_id;
@@ -47,9 +48,9 @@ module riscotti_v (
     logic [4:0] rd_idx_id, rd_idx_ex, rd_idx_mem, rd_idx_wb;
     logic [31:0] rs1_ex;
     logic [31:0] rs2_ex, rs2_mem;
+    logic [31:0] alu_op1_ex;
     logic [31:0] alu_op2_ex;
     logic branch_enable_ex, branch_enable_mem;
-    logic [31:0] branch_addr_ex, branch_addr_mem;
     logic [31:0] alu_out_ex, alu_out_mem, alu_out_wb;
     logic [31:0] rd_wb;
     logic [31:0] rdata_wb;
@@ -71,7 +72,7 @@ module riscotti_v (
         .clk(clk),
         .rstN(rstN),
         .branch_enable(branch_enable_mem),
-        .branch_addr(branch_addr_mem),
+        .branch_addr(alu_out_mem),
         .pc(pc_if)
     );
 
@@ -100,7 +101,8 @@ module riscotti_v (
         .imm_enable(imm_enable_id),
         .load_mode(load_mode_id),
         .we(we_id),
-        .branch_mode(branch_mode_id)
+        .branch_mode(branch_mode_id),
+        .pc_enable(pc_enable_id)
     );
 
     register_file register_file_i (
@@ -128,6 +130,7 @@ module riscotti_v (
             load_mode_ex <= LM_NONE;
             we_ex <= 4'b0000;
             rd_idx_ex <= '0;
+            pc_enable_ex <= 1'b0;
         end else begin
             pc_ex <= pc_id;
             branch_mode_ex <= branch_mode_id;
@@ -137,15 +140,16 @@ module riscotti_v (
             load_mode_ex <= load_mode_id;
             we_ex <= we_id;
             rd_idx_ex <= rd_idx_id;
+            pc_enable_ex <= pc_enable_id;
         end
     end
 
+    assign alu_op1_ex = (pc_enable_ex) ? pc_ex : rs1_ex;
     assign alu_op2_ex = (imm_enable_ex) ? imm_ex : rs2_ex;
-    assign branch_addr_ex = pc_ex + imm_ex;
 
     // TODO remove div_by_zero, maybe?
     alu alu_i (
-        .op1(rs1_ex),
+        .op1(alu_op1_ex),
         .op2(alu_op2_ex),
         .mode(alu_mode_ex),
         .out(alu_out_ex),
@@ -166,7 +170,6 @@ module riscotti_v (
     // Register signals from EX to MEM
     always_ff @(posedge clk) begin
         if (!rstN) begin
-            branch_addr_mem <= '0;
             branch_enable_mem <= '0;
             alu_out_mem <= '0;
             rs2_mem <= '0;
@@ -174,7 +177,6 @@ module riscotti_v (
             we_mem <= 4'b0000;
             rd_idx_mem <= '0;
         end else begin
-            branch_addr_mem <= branch_addr_ex;
             branch_enable_mem <= branch_enable_ex;
             alu_out_mem <= alu_out_ex;
             rs2_mem <= rs2_ex;
@@ -202,6 +204,15 @@ module riscotti_v (
         end
     end
 
-    assign rd_wb = (load_mode_wb == LM_NONE) ? alu_out_wb : rdata_wb;
+    always_comb begin
+        case (load_mode_wb)
+            LM_B: rd_wb = {{24{rdata_wb[7]}}, rdata_wb[7:0]};
+            LM_H: rd_wb = {{16{rdata_wb[15]}}, rdata_wb[15:0]};
+            LM_W: rd_wb = rdata_wb;
+            LM_BU: rd_wb = {24'd0, rdata_wb[7:0]};
+            LM_HU: rd_wb = {16'd0, rdata_wb[15:0]};
+            default: rd_wb = alu_out_wb;
+        endcase
+    end
 
 endmodule : riscotti_v

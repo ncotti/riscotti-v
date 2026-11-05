@@ -51,6 +51,7 @@ async def test_r_instructions(dut):
         assert dut.we.value == 0
         assert dut.load_mode.value == LoadMode.LM_NONE
         assert dut.branch_mode.value == BranchMode.BM_NONE
+        assert dut.pc_enable.value == 0
 
 
 @cocotb.test
@@ -95,6 +96,7 @@ async def test_m_extension_instructions(dut):
         assert dut.we.value == 0
         assert dut.load_mode.value == LoadMode.LM_NONE
         assert dut.branch_mode.value == BranchMode.BM_NONE
+        assert dut.pc_enable.value == 0
 
 
 @cocotb.test
@@ -141,6 +143,7 @@ async def test_i_alu_instructions(dut):
         assert dut.we.value == 0
         assert dut.load_mode.value == LoadMode.LM_NONE
         assert dut.branch_mode.value == BranchMode.BM_NONE
+        assert dut.pc_enable.value == 0
 
 
 @cocotb.test
@@ -177,7 +180,7 @@ async def test_load_instructions(dut):
         assert dut.we.value == 0
         assert dut.load_mode.value == load_mode
         assert dut.branch_mode.value == BranchMode.BM_NONE
-
+        assert dut.pc_enable.value == 0
 
 
 @cocotb.test
@@ -210,6 +213,7 @@ async def test_store_instructions(dut):
         assert dut.we.value == we
         assert dut.load_mode.value == LoadMode.LM_NONE
         assert dut.branch_mode.value == BranchMode.BM_NONE
+        assert dut.pc_enable.value == 0
 
 @cocotb.test
 async def test_branch_instructions(dut):
@@ -249,6 +253,7 @@ async def test_branch_instructions(dut):
         assert dut.we.value == 0
         assert dut.load_mode.value == LoadMode.LM_NONE
         assert dut.branch_mode.value == branch_mode
+        assert dut.pc_enable.value == 1
 
 
 @cocotb.test
@@ -258,7 +263,35 @@ async def test_jump_instructions(dut):
 
 @cocotb.test
 async def test_load_upper_instructions(dut):
-    assert 0
+    dut.op.value = riscv_auipc(1, 0xABCDE)
+
+    await Timer(1)
+    assert dut.alu_mode.value == AluMode.ADD
+    assert dut.rd_idx.value == 1
+    assert dut.rs1_idx.value == 0
+    assert dut.rs2_idx.value == 0
+    assert dut.imm.value == 0xABCDE000
+    assert dut.imm_enable.value == 1
+    assert dut.op_valid.value == 1
+    assert dut.we.value == 0
+    assert dut.load_mode.value == LoadMode.LM_NONE
+    assert dut.branch_mode.value == BranchMode.BM_NONE
+    assert dut.pc_enable.value == 1
+
+    dut.op.value = riscv_lui(2, 0x12345)
+
+    await Timer(1)
+    assert dut.alu_mode.value == AluMode.ADD
+    assert dut.rd_idx.value == 2
+    assert dut.rs1_idx.value == 0
+    assert dut.rs2_idx.value == 0
+    assert dut.imm.value == 0x12345000
+    assert dut.imm_enable.value == 1
+    assert dut.op_valid.value == 1
+    assert dut.we.value == 0
+    assert dut.load_mode.value == LoadMode.LM_NONE
+    assert dut.branch_mode.value == BranchMode.BM_NONE
+    assert dut.pc_enable.value == 0
 
 
 @cocotb.test
