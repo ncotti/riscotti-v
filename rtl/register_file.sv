@@ -32,15 +32,13 @@ module register_file (
     // Zero constant
     assign regx[0] = '0;
 
-    // Assign output registers
-    assign rs1 = regx[rs1_idx];
-    assign rs2 = regx[rs2_idx];
-
     always_ff @(posedge clk) begin
         if (!rstN) begin
             for (int i = 1; i < 32; i++) begin
                 regx[i] <= '0;
             end
+            rs1 <= regx[0];
+            rs2 <= regx[0];
         end else begin
             // By default, refresh all registers
             for (int i = 1; i < 32; i++) begin
@@ -49,6 +47,9 @@ module register_file (
             if (rd_idx != 0) begin
                 regx[rd_idx] <= rd;
             end
+
+            rs1 <= regx[rs1_idx];
+            rs2 <= regx[rs2_idx];
         end
     end
 
