@@ -11,7 +11,6 @@ async def reset(dut):
     dut.rs1_idx.value = 0
     dut.rs2_idx.value = 0
     dut.rd_idx.value = 0
-    dut.rd_we.value = 0
 
     await RisingEdge(dut.clk)
 
@@ -40,9 +39,6 @@ async def test_reset(dut):
 @cocotb.test
 async def test_rw_registers(dut):
     await reset(dut)
-
-    # Enable writing to the register
-    dut.rd_we.value = 1
 
     # Check that writing to x0 has no effect
     dut.rs1_idx.value = 0
