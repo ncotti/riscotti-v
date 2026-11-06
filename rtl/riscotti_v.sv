@@ -38,8 +38,8 @@ module riscotti_v (
     logic [31:0] pc_jump_ex, pc_jump_mem;
     logic pc_enable_id, pc_enable_ex;
     logic [31:0] op_id;
-    logic [4:0] rs1_idx_id;
-    logic [4:0] rs2_idx_id;
+    logic [4:0] rs1_idx_id, rs1_idx_ex;
+    logic [4:0] rs2_idx_id, rs2_idx_ex;
     branch_mode_t branch_mode_id, branch_mode_ex;
     logic [31:0] imm_id, imm_ex;
     logic imm_enable_id, imm_enable_ex;
@@ -58,9 +58,13 @@ module riscotti_v (
     logic [31:0] wdata_mem;
     logic [31:0] addr_mem;
     logic [31:0] alu_out_mux_mem, alu_out_mux_wb;
+    logic rs1_forward_ex;
+    logic rs2_forward_ex;
+    logic [31:0] rs1_forward_value_ex;
+    logic [31:0] rs2_forward_value_ex;
+    logic pc_stall_ex;
 
     // Rename input signals with their pipeline-stage names
-    assign op_id = op;
     assign rdata_wb = rdata;
     assign pc = pc_if;
     assign wdata = wdata_mem;
@@ -74,6 +78,7 @@ module riscotti_v (
         .clk(clk),
         .rstN(rstN),
         .branch_enable(branch_enable_mem),
+        .pc_stall(pc_stall_ex),
         .branch_addr(alu_out_mem),
         .pc(pc_if)
     );
@@ -89,6 +94,8 @@ module riscotti_v (
             pc_id <= pc_if;
         end
     end
+
+    assign op_id = (pc_stall_ex) ? RiscvNop : op;
 
     // TODO valid_op as an exception
     instruction_decoder instruction_decoder_i (
@@ -133,6 +140,8 @@ module riscotti_v (
             we_ex <= 4'b0000;
             rd_idx_ex <= '0;
             pc_enable_ex <= 1'b0;
+            rs1_idx_ex <= '0;
+            rs2_idx_ex <= '0;
         end else begin
             pc_ex <= pc_id;
             branch_mode_ex <= branch_mode_id;
@@ -143,11 +152,15 @@ module riscotti_v (
             we_ex <= we_id;
             rd_idx_ex <= rd_idx_id;
             pc_enable_ex <= pc_enable_id;
+            rs1_idx_ex <= rs1_idx_id;
+            rs2_idx_ex <= rs2_idx_id;
         end
     end
 
-    assign alu_op1_ex = (pc_enable_ex) ? pc_ex : rs1_ex;
-    assign alu_op2_ex = (imm_enable_ex) ? imm_ex : rs2_ex;
+    assign alu_op1_ex = (pc_enable_ex) ? pc_ex :
+        (rs1_forward_ex) ? rs1_forward_value_ex : rs1_ex;
+    assign alu_op2_ex = (imm_enable_ex) ? imm_ex :
+        (rs2_forward_ex) ? rs2_forward_value_ex : rs2_ex;
 
     // TODO remove div_by_zero, maybe?
     alu alu_i (
@@ -164,6 +177,21 @@ module riscotti_v (
         .rs1(rs1_ex),
         .rs2(rs2_ex),
         .branch_enable(branch_enable_ex)
+    );
+
+    data_hazard data_hazard_i (
+        .rs1_idx_ex(rs1_idx_ex),
+        .rs2_idx_ex(rs2_idx_ex),
+        .rd_idx_mem(rd_idx_mem),
+        .rd_idx_wb(rd_idx_wb),
+        .load_mode(load_mode_mem),
+        .alu_out(alu_out_mem),
+        .rd(rd_wb),
+        .rs1_forward(rs1_forward_ex),
+        .rs2_forward(rs2_forward_ex),
+        .rs1_forward_value(rs1_forward_value_ex),
+        .rs2_forward_value(rs2_forward_value_ex),
+        .pc_stall(pc_stall_ex)
     );
 
     assign pc_jump_ex = pc_ex + 4;

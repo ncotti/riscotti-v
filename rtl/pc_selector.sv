@@ -15,6 +15,7 @@ module pc_selector(
     input logic clk,
     input logic rstN,
     input logic branch_enable,
+    input logic pc_stall,
     input logic [31:0] branch_addr,
     output logic [31:0] pc
 );
@@ -27,6 +28,8 @@ always_ff @(posedge clk) begin
     end else begin
         if (branch_enable) begin
             pc <= branch_addr;
+        end else if (pc_stall) begin
+            pc <= pc;
         end else begin
             pc <= pc + 4;
         end

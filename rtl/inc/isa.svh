@@ -139,6 +139,9 @@ package isa;
         OP_FENCE  = {Funct7Width'(8'h00), Funct3Width'(4'h0), FENCE_TYPE}
     } op_t;
 
+    /* verilator lint_off UNUSEDPARAM */
+    localparam logic [31:0] RiscvNop = {7'h0, 5'h0, 5'h0, 3'h0, 5'h0, R_TYPE};
+
 endpackage : isa
 
 

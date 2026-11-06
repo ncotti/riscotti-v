@@ -512,3 +512,187 @@ async def test_jump_and_link(dut):
     # PC should be updated
     assert dut.pc.value == 44
 
+@cocotb.test
+async def test_data_hazard_single_store(dut):
+    await reset(dut)
+
+    # Initialize registers and flush the pipeline
+    dut.op.value = riscv_addi(1, 0, 10)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(3, 0, 30)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(5, 0, 50)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(6, 0, 60)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(15, 0, 150)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+    # Source instruction (SRC) wants to store X2.
+    # The following instructions (DST) use X2, while this instruction is in
+    # the pipeline
+    dut.op.value = riscv_sub(2, 3, 1)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # First hazard:
+    # SRC in EX, DST in ID
+    # Move the alu output directly into its input (from MEM into EX).
+    dut.op.value = riscv_and(12, 2, 5)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Second hazard:
+    # SRC in MEM, DST in ID
+    # Move the rd register directly into the ALU input (from WB into EX).
+    dut.op.value = riscv_or(13, 6, 2)
+    assert dut.addr.value == 30 - 10
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Third hazard:
+    # SRC in WB, DST in ID
+    # The register file reads and writes the same register, so the output
+    # should be bypassed.
+    dut.op.value = riscv_add(14, 2, 2)
+    assert dut.addr.value == 50 & 20
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # This instruction has no hazard, since SRC finished the pipeline
+    dut.op.value = riscv_sw(15, 2, 100)
+    assert dut.addr.value == 60 | 20
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    assert dut.addr.value == 20 + 20
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    assert dut.addr.value == 20 + 100
+    assert dut.wdata.value == 150
+
+@cocotb.test
+async def test_data_hazard_repeated_store(dut):
+    await reset(dut)
+
+    # Initialize registers and flush the pipeline
+    dut.op.value = riscv_addi(1, 0, 10)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(2, 0, 20)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(3, 0, 30)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(4, 0, 40)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(5, 0, 50)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+    # The first instruction and all the following ones use and store
+    # the "x1" register.
+    dut.op.value = riscv_add(1, 1, 2)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Data hazard 1:
+    # SRC in EX, DST in ID
+    # The output of the ALU should be used as the input.
+    dut.op.value = riscv_add(1, 1, 3)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Data hazard 2:
+    # SRC in MEM, DST in ID and EX
+    # Once again, use the value from the ALU as the new input.
+    dut.op.value = riscv_add(1, 1, 4)
+    assert dut.addr.value == 30
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Data hazard 3:
+    # SRC in WB, DST in ID, EX and MEM
+    # Use the value from the ALU once again., the value of the register
+    # file is outdated.
+    dut.op.value = riscv_add(1, 1, 5)
+    assert dut.addr.value == 60
+
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    assert dut.addr.value == 100
+
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    assert dut.addr.value == 150
+
+@cocotb.test
+async def test_data_hazard_memory(dut):
+    """
+    Whenever you have an instruction that depends on a value that is read from
+    memory, you need to stall the pipeline until that value is read, since
+    it is not available until the "WB" stage.
+    E.g.:
+    lw x1, 4(x2)
+    add x1, x1, x3
+    """
+    await reset(dut)
+
+    # First instruction is a mock
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+
+    # Initialize registers and flush the pipeline
+    dut.op.value = riscv_addi(1, 0, 0)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(2, 0, 20)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(3, 0, 30)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_addi(3, 0, 40)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+
+    # LW in ID
+    dut.op.value = riscv_lw(1, 2, 8)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in EX, ADD in ID
+    # We need to stall here, the PC should be freezed
+    old_pc = dut.pc.value
+    dut.op.value = riscv_add(1, 1, 3)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in MEM, ADD in EX, SUB in ID
+    # This should be the last command being fetched, a NOP should be introduced
+    # into the MEM stage of the pipeline and the ADD instruction should not
+    # advance to the MEM stage.
+    assert dut.pc.value == old_pc
+    dut.op.value = riscv_sub(1, 4, 1)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in WB, NOP in MEM, ADD in EX, SUB in ID
+    # The value from
+
+
+
+    assert 0
+
+@cocotb.test
+async def test_data_hazard_memcpy(dut):
+    assert 0
+
