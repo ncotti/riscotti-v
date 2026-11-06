@@ -258,7 +258,35 @@ async def test_branch_instructions(dut):
 
 @cocotb.test
 async def test_jump_instructions(dut):
-    assert 0
+    dut.op.value = riscv_jal(1, 0xABC)
+
+    await Timer(1)
+    assert dut.alu_mode.value == AluMode.ADD
+    assert dut.rd_idx.value == 1
+    assert dut.rs1_idx.value == 0
+    assert dut.rs2_idx.value == 0
+    assert dut.imm.value == 0xABC
+    assert dut.imm_enable.value == 1
+    assert dut.op_valid.value == 1
+    assert dut.we.value == 0
+    assert dut.load_mode.value == LoadMode.LM_NONE
+    assert dut.branch_mode.value == BranchMode.BM_JUMP
+    assert dut.pc_enable.value == 1
+
+    dut.op.value = riscv_jalr(2, 3, 0x123)
+
+    await Timer(1)
+    assert dut.alu_mode.value == AluMode.ADD
+    assert dut.rd_idx.value == 2
+    assert dut.rs1_idx.value == 3
+    assert dut.rs2_idx.value == 0
+    assert dut.imm.value == 0x123
+    assert dut.imm_enable.value == 1
+    assert dut.op_valid.value == 1
+    assert dut.we.value == 0
+    assert dut.load_mode.value == LoadMode.LM_NONE
+    assert dut.branch_mode.value == BranchMode.BM_JUMP
+    assert dut.pc_enable.value == 0
 
 
 @cocotb.test

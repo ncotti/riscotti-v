@@ -37,6 +37,7 @@ package isa;
         BM_EQ   = 3'h0,
         BM_NE   = 3'h1,
         BM_NONE = 3'h2,
+        BM_JUMP = 3'h3,
         BM_LT   = 3'h4,
         BM_GE   = 3'h5,
         BM_LTU  = 3'h6,

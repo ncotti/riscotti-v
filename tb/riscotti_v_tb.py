@@ -450,3 +450,65 @@ async def test_add_upper_imm_to_pc(dut):
     await Timer(1, "ns")
 
     assert dut.addr.value == 0x12345008
+
+@cocotb.test
+async def test_jump_and_link(dut):
+    await reset(dut)
+
+    # First operation is ignored
+    assert dut.pc.value == 0
+    dut.op.value = riscv_nop()
+
+
+    await RisingEdge(dut.clk) # PC = 0
+    await RisingEdge(dut.clk) # PC = 4
+    await RisingEdge(dut.clk) # PC = 8
+    await Timer(1, "ns")
+
+    # Send JAL
+    assert dut.pc.value == 12
+    dut.op.value = riscv_jal(1, 64) # PC = 8
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # EX
+    assert dut.pc.value == 16
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # MEM
+    assert dut.pc.value == 20
+    assert dut.addr.value == 8 + 4
+
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # PC should be updated, give a cycle until the memory settles
+    assert dut.pc.value == 8 + 64
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # JALR, using the value from the previous jump, which should be
+    # PC + 4 = 12
+    assert dut.pc.value == 76
+    dut.op.value = riscv_jalr(5, 1, 32) # PC = 72 + 4, but jumping to 12 + 32 = 44
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # EX
+    assert dut.pc.value == 80
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # MEM
+    assert dut.pc.value == 84
+    assert dut.addr.value == 72 + 4
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # PC should be updated
+    assert dut.pc.value == 44
+

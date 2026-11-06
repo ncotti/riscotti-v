@@ -27,7 +27,8 @@ module brancher
             BM_GE:   branch_enable = rs1 >= rs2;
             BM_LTU:  branch_enable = unsigned'(rs1) < unsigned'(rs2);
             BM_GEU:  branch_enable = unsigned'(rs1) >= unsigned'(rs2);
-            default: branch_enable = '0;
+            BM_JUMP: branch_enable = 1'b1;
+            default: branch_enable = 1'b0;
         endcase
     end
 

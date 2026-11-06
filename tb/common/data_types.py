@@ -35,6 +35,7 @@ class BranchMode(IntEnum):
     BM_EQ   = 0
     BM_NE   = 1
     BM_NONE = 2
+    BM_JUMP = 3
     BM_LT   = 4
     BM_GE   = 5
     BM_LTU  = 6

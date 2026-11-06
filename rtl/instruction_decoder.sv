@@ -56,7 +56,8 @@ module instruction_decoder
     assign ialu_mode = ialu_mode_t'(funct3);
 
     assign load_mode = (opcode == I_TYPE_LOAD) ? load_mode_t'(funct3) : LM_NONE;
-    assign branch_mode = (opcode == B_TYPE) ? branch_mode_t'(funct3) : BM_NONE;
+    assign branch_mode = (opcode == B_TYPE) ? branch_mode_t'(funct3) :
+        (opcode == J_TYPE || opcode == I_TYPE_JUMP) ? BM_JUMP : BM_NONE;
 
     always_comb begin
         op_valid = 1'b1;
@@ -140,7 +141,7 @@ module instruction_decoder
                 rs2_idx = '0;
                 rd_idx = op[11:7];
                 imm_enable = 1;
-                pc_enable = 1;
+                pc_enable = 0;
                 imm = (funct3 != 3'h5) ? {20'b0, op[31:20]} : {27'b0, op[24:20]};
             end
             I_TYPE_ENV: begin
@@ -222,7 +223,7 @@ module instruction_decoder
                 rs1_idx = '0;
                 rs2_idx = '0;
                 rd_idx = op[11:7];
-                pc_enable = 0;
+                pc_enable = 1;
                 imm_enable = 1;
                 imm = {11'b0, op[31], op[19:12], op[20], op[30:21], 1'b0};
             end

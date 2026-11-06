@@ -35,6 +35,7 @@ module riscotti_v (
     timeunit 1ns; timeprecision 1ns;
 
     logic [31:0] pc_if, pc_id, pc_ex;
+    logic [31:0] pc_jump_ex, pc_jump_mem;
     logic pc_enable_id, pc_enable_ex;
     logic [31:0] op_id;
     logic [4:0] rs1_idx_id;
@@ -51,11 +52,12 @@ module riscotti_v (
     logic [31:0] alu_op1_ex;
     logic [31:0] alu_op2_ex;
     logic branch_enable_ex, branch_enable_mem;
-    logic [31:0] alu_out_ex, alu_out_mem, alu_out_wb;
+    logic [31:0] alu_out_ex, alu_out_mem;
     logic [31:0] rd_wb;
     logic [31:0] rdata_wb;
     logic [31:0] wdata_mem;
     logic [31:0] addr_mem;
+    logic [31:0] alu_out_mux_mem, alu_out_mux_wb;
 
     // Rename input signals with their pipeline-stage names
     assign op_id = op;
@@ -164,6 +166,8 @@ module riscotti_v (
         .branch_enable(branch_enable_ex)
     );
 
+    assign pc_jump_ex = pc_ex + 4;
+
     //-------------------------------------------------------------------------
     // MEM
     //-------------------------------------------------------------------------
@@ -176,6 +180,7 @@ module riscotti_v (
             load_mode_mem <= LM_NONE;
             we_mem <= 4'b0000;
             rd_idx_mem <= '0;
+            pc_jump_mem <= '0;
         end else begin
             branch_enable_mem <= branch_enable_ex;
             alu_out_mem <= alu_out_ex;
@@ -183,10 +188,12 @@ module riscotti_v (
             load_mode_mem <= load_mode_ex;
             we_mem <= we_ex;
             rd_idx_mem <= rd_idx_ex;
+            pc_jump_mem <= pc_jump_ex;
         end
     end
 
-    assign addr_mem = alu_out_mem;
+    assign alu_out_mux_mem = (branch_enable_mem) ? pc_jump_mem : alu_out_mem;
+    assign addr_mem = alu_out_mux_mem;
     assign wdata_mem = rs2_mem;
 
     //-------------------------------------------------------------------------
@@ -195,11 +202,11 @@ module riscotti_v (
     always_ff @(posedge clk) begin
         if (!rstN) begin
             load_mode_wb <= LM_NONE;
-            alu_out_wb <= '0;
+            alu_out_mux_wb <= '0;
             rd_idx_wb <= '0;
         end else begin
             load_mode_wb <= load_mode_mem;
-            alu_out_wb <= alu_out_mem;
+            alu_out_mux_wb <= alu_out_mux_mem;
             rd_idx_wb <= rd_idx_mem;
         end
     end
@@ -211,7 +218,7 @@ module riscotti_v (
             LM_W: rd_wb = rdata_wb;
             LM_BU: rd_wb = {24'd0, rdata_wb[7:0]};
             LM_HU: rd_wb = {16'd0, rdata_wb[15:0]};
-            default: rd_wb = alu_out_wb;
+            default: rd_wb = alu_out_mux_wb;
         endcase
     end
 
