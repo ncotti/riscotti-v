@@ -79,8 +79,15 @@ async def test_rw_registers(dut):
     dut.rd_idx.value = 0
     dut.rd.value = 0x5555_5555
     await RisingEdge(dut.clk)
-    assert dut.rs1.value == 0
+    await Timer(1, "ns")
+
+    # Reading and writing the same idx bypasses the value
+    assert dut.rs1.value == 0x5555_5555
+    dut.rd_idx.value = 1
     await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # Now, it should read "0", since x0 is not writable
     assert dut.rs1.value == 0
 
     for i in range(1, 32):
@@ -96,7 +103,8 @@ async def test_rw_registers(dut):
             assert dut.rs1.value == 0
         else:
             assert dut.rs1.value == (i - 1) + 7
-        assert dut.rs2.value == 0
+
+        assert dut.rs2.value == i + 7
 
     for i in range(32):
         dut.rs1_idx.value = i

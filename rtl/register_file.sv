@@ -10,10 +10,12 @@
 /// the next clock cycle by the `rs2` output.
 /// @param rd_idx Destination register index. The value of this register will
 /// be updated to `rd` in the next clock cycle. If no register wants to be
-/// updated, pointing to the `x0` register does nothing.
+/// updated, pointing to the `x0` register does not update any register.
 /// @param rd Value to update the `rd_idx` register.
-/// @param rs1 Value pointed by the `rs1_idx` in the prev. clock cycle.
-/// @param rs2 Value pointer by the `rs2_idx` in the prev . clock cycle.
+/// @param rs1 Value pointed by `rs1_idx` in the prev. clock cycle. If
+/// `rs1_idx == rd_idx`, the value of `rd` will be returned instead.
+/// @param rs2 Value pointer by `rs2_idx` in the prev . clock cycle.  If
+/// `rs2_idx == rd_idx`, the value of `rd` will be returned instead.
 module register_file (
     input logic clk,
     input logic rstN,
@@ -48,8 +50,8 @@ module register_file (
                 regx[rd_idx] <= rd;
             end
 
-            rs1 <= regx[rs1_idx];
-            rs2 <= regx[rs2_idx];
+            rs1 <= (rs1_idx == rd_idx) ? rd : regx[rs1_idx];
+            rs2 <= (rs2_idx == rd_idx) ? rd : regx[rs2_idx];
         end
     end
 

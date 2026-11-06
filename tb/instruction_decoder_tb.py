@@ -325,3 +325,7 @@ async def test_load_upper_instructions(dut):
 @cocotb.test
 async def test_env_instructions(dut):
     assert 0
+
+@cocotb.test
+async def test_fence(dut):
+    assert 0

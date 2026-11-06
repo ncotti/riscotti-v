@@ -145,12 +145,12 @@ module instruction_decoder
                 imm = (funct3 != 3'h5) ? {20'b0, op[31:20]} : {27'b0, op[24:20]};
             end
             I_TYPE_ENV: begin
-                rs1_idx = op[19:15];
+                rs1_idx = '0;
                 rs2_idx = '0;
-                rd_idx = op[11:7];
-                imm_enable = 1;
+                rd_idx = '0;
+                imm_enable = 0;
                 pc_enable = 0;
-                imm = (funct3 != 3'h5) ? {20'b0, op[31:20]} : {27'b0, op[24:20]};
+                imm = {20'b0, op[31:20]};
             end
             S_TYPE: begin
                 rs1_idx = op[19:15];
