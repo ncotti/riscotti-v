@@ -36,6 +36,7 @@ async def register_preload(dut, register_values: list):
     await RisingEdge(dut.clk)   # ID -> EX
     await RisingEdge(dut.clk)   # EX -> MEM
     await RisingEdge(dut.clk)   # MEM -> WB
+    await Timer(1, "ns")
 
 @cocotb.test
 async def test_imm_math(dut):
@@ -280,11 +281,6 @@ async def test_branch_instruction(dut):
     await Timer(1, "ns")
 
     # EX -> MEM
-    assert dut.pc.value == 20
-    dut.op.value = riscv_nop()  # PC = 16
-    await RisingEdge(dut.clk)
-    await Timer(1, "ns")
-
     # BEQ branch happened
     assert dut.pc.value == 8 + 32
     await RisingEdge(dut.clk)
@@ -303,11 +299,6 @@ async def test_branch_instruction(dut):
     await Timer(1, "ns")
 
     # EX -> MEM
-    assert dut.pc.value == 52
-    dut.op.value = riscv_nop() # PC = 48
-    await RisingEdge(dut.clk)
-    await Timer(1, "ns")
-
     # BNE branch happened
     assert dut.pc.value == 40 + 32
     await RisingEdge(dut.clk)
@@ -326,11 +317,6 @@ async def test_branch_instruction(dut):
     await Timer(1, "ns")
 
     # EX -> MEM
-    assert dut.pc.value == 84
-    dut.op.value = riscv_nop() # PC = 80
-    await RisingEdge(dut.clk)
-    await Timer(1, "ns")
-
     # BLT branch happened
     assert dut.pc.value == 72 + 32
     await RisingEdge(dut.clk)
@@ -479,15 +465,8 @@ async def test_jump_and_link(dut):
     await Timer(1, "ns")
 
     # MEM
-    assert dut.pc.value == 20
-    assert dut.addr.value == 8 + 4
-
-    await RisingEdge(dut.clk)
-    await Timer(1, "ns")
-
-    # PC should be updated, give a cycle until the memory settles
     assert dut.pc.value == 8 + 64
-    dut.op.value = riscv_nop()
+    assert dut.addr.value == 8 + 4
     await RisingEdge(dut.clk)
     await Timer(1, "ns")
 
@@ -505,13 +484,10 @@ async def test_jump_and_link(dut):
     await Timer(1, "ns")
 
     # MEM
-    assert dut.pc.value == 84
+    assert dut.pc.value == 44
     assert dut.addr.value == 72 + 4
     await RisingEdge(dut.clk)
     await Timer(1, "ns")
-
-    # PC should be updated
-    assert dut.pc.value == 44
 
 @cocotb.test
 async def test_data_hazard_single_store(dut):
@@ -877,3 +853,48 @@ async def test_data_hazard_memcpy_both_arguments(dut):
     # SW in WB, ADD in MEM
     assert dut.pc.value == int(old_pc) + 16
     assert dut.addr.value == 0xAD + 0xAD
+
+
+@cocotb.test
+async def test_branch_hazard(dut):
+    await reset(dut)
+    await register_preload(dut, REGISTER_LADDER_VALUES)
+
+    # BEQ in ID
+    old_pc = int(dut.pc.value)
+    dut.op.value = riscv_beq(0, 0, 64)  # PC_if = PC0 + 4; PC_id = PC0
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # BEQ in EX, ADD in ID
+    assert dut.pc.value == old_pc + 4
+    dut.op.value = riscv_add(10, 1, 2)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # BEQ in MEM, NOP in EX, NOP in ID
+    # Instructions should be invalidated when a branch is detected.
+    # The PC should point to the next instruction after the branch
+    assert dut.pc.value == old_pc - 4 + 64
+    dut.op.value = riscv_sub(11, 25, 20)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # NOP in MEM, NOP in EX, ADD in ID
+    # Make sure that NOPs are being executed (registers 10 and 11 should
+    # not be modified)
+    assert dut.pc.value == old_pc + 64
+    dut.op.value = riscv_add(1, 10, 11)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # NOP in WB, NOP in MEM, ADD in EX
+    assert dut.pc.value == old_pc + 64 + 4
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # NOP in WB, ADD in MEM
+    assert dut.pc.value == old_pc + 64 + 8
+    assert dut.addr.value == 10 + 11
+
+

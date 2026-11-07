@@ -97,7 +97,7 @@ module riscotti_v (
         end
     end
 
-    assign op_id = (pc_stall_ex) ? op_ex : op;
+    assign op_id = (pc_stall_ex) ? op_ex : (branch_enable_mem) ? RiscvNop : op;
 
     // TODO valid_op as an exception
     instruction_decoder instruction_decoder_i (
@@ -192,6 +192,7 @@ module riscotti_v (
         .we_in(we_ex),
         .rd_idx_in(rd_idx_ex),
         .branch_mode_in(branch_mode_ex),
+        .branch_enable_mem(branch_enable_mem),
         .alu_out(alu_out_mem),
         .rd(rd_wb),
         .rs1_forward(rs1_forward_ex),

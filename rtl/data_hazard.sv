@@ -11,6 +11,7 @@ module data_hazard
     input logic [3:0] we_in,
     input logic [4:0] rd_idx_in,
     input branch_mode_t branch_mode_in,
+    input logic branch_enable_mem,
     output logic rs1_forward,
     output logic rs2_forward,
     output logic [31:0] rs1_forward_value,
@@ -43,8 +44,8 @@ module data_hazard
     // If pc_stall, then the current instruction will be made redundant, i.e.,
     // any write to memory, to register or branch instruction will be rendered
     // useless.
-    assign we_out = (pc_stall) ? '0 : we_in;
-    assign rd_idx_out = (pc_stall) ? '0 : rd_idx_in;
-    assign branch_mode_out = (pc_stall) ? BM_NONE : branch_mode_in;
+    assign we_out = (pc_stall | branch_enable_mem) ? '0 : we_in;
+    assign rd_idx_out = (pc_stall | branch_enable_mem) ? '0 : rd_idx_in;
+    assign branch_mode_out = (pc_stall | branch_enable_mem) ? BM_NONE : branch_mode_in;
 
 endmodule: data_hazard

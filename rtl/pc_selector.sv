@@ -24,7 +24,8 @@ module pc_selector(
 
     logic [31:0] pc_prev, pc_reg;
 
-    assign pc = (pc_stall) ? pc_prev : pc_reg;
+    assign pc = (pc_stall) ? pc_prev :
+        (branch_enable) ? branch_addr : pc_reg;
 
 always_ff @(posedge clk) begin
     if (!rstN) begin
@@ -34,7 +35,7 @@ always_ff @(posedge clk) begin
         pc_prev <= pc_reg;
 
         if (branch_enable) begin
-            pc_reg <= branch_addr;
+            pc_reg <= branch_addr + 4;
         end else if (pc_stall) begin
             pc_reg <= pc_reg;
         end else begin
