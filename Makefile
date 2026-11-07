@@ -1,8 +1,8 @@
-V_TB_TOP := ram_dual_port
+V_TB_TOP := riscotti_v
 
-V_SRC_DIRS := rtl/memories
+V_SRC_DIRS := cotti-modules/rtl/memories rtl
 V_INC_DIRS := rtl/inc
 
-V_TEST_DIRS := tb/memories
+V_TEST_DIRS := tb
 
 include cotti-make/cottimake.mk

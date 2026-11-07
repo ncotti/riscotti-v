@@ -14,6 +14,7 @@ async def reset(dut):
     c = Clock(dut.clk, 10, "ns")
     c.start()
 
+    dut.rdata.value = 0x00
     dut.rstN.value = 1
     await RisingEdge(dut.clk)
     await Timer(1, "ns")
@@ -701,14 +702,178 @@ async def test_data_hazard_memory(dut):
 
     # NOP in WB, ADD in MEM, SUB in EX, NOP in ID
     assert dut.addr.value == 30 + 34
+    assert dut.pc.value == int(old_pc) + 8
     dut.op.value = riscv_nop()
     await RisingEdge(dut.clk)
     await Timer(1, "ns")
 
     # ADD in WB, SUB in MEM, NOP in EX
+    assert dut.pc.value == int(old_pc) + 12
     assert dut.addr.value == 64 - 40
 
 @cocotb.test
 async def test_data_hazard_memcpy(dut):
-    assert 0
+    """
+    A memcpy is a very common operation.
 
+    By default, a memcpy is not a hazard per se, an operation like this:
+
+    lw x1, 0(x2)
+    sw x1, 4(x2)
+
+    Would result in "x1" stalling the pipeline by one cycle, and then storing
+    the value read from address "x2 + 0" into "x2 + 4".
+
+    However, since "memcpy" is such a common function, we want to avoid
+    stalling the pipeline just for this particular case.
+    """
+    await reset(dut)
+
+    # LW in ID
+    old_pc = dut.pc.value
+    dut.op.value = riscv_lw(1, 2, 0)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in EX, SW in ID
+    assert dut.pc.value == int(old_pc) + 4
+    dut.op.value = riscv_sw(1, 2, 4)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in MEM, SW in EX, ADD in ID
+    assert dut.pc.value == int(old_pc) + 8
+    assert dut.addr.value == 0
+    dut.op.value = riscv_add(1, 1, 1)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in WB, SW in MEM, ADD in EX, NOP in ID
+    # Here, the value read from WB should be forwarded directly into
+    # the MEM stage, while the updated value from MEM should be forwarded
+    # into EX.
+    assert dut.pc.value == int(old_pc) + 12
+    assert dut.addr.value == 4
+    assert dut.wdata.value == 0
+    dut.rdata.value = 0xAB
+    await Timer(1, "ns")
+    assert dut.wdata.value == 0xAB
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    assert dut.pc.value == int(old_pc) + 16
+    assert dut.addr.value == 0xAB + 0xAB
+
+
+@cocotb.test
+async def test_data_hazard_memcpy_but_address(dut):
+    """
+    A memcpy where the address is the one that changes should stall
+    the pipeline, because the operation "x5 + imm" must be done in the
+    EX stage.
+
+    lw x5, 12(x6)
+    sw x7, 16(x5)
+    """
+    await reset(dut)
+
+    # Initialize registers and flush the pipeline
+    dut.op.value = riscv_addi(7, 0, 70)
+    await RisingEdge(dut.clk)
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+
+    old_pc = dut.pc.value
+    dut.op.value = riscv_lw(5, 6, 12)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in EX, SW in ID
+    assert dut.pc.value == int(old_pc) + 4
+    dut.op.value = riscv_sw(7, 5, 16)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in MEM, SW in EX, ADD in ID
+    # Having the LW in MEM, with the address being the one changing, should
+    # stall the pipeline
+    assert dut.pc.value == int(old_pc) + 4
+    assert dut.addr.value == 12
+    dut.op.value = riscv_add(10, 5, 0)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in WB, NOP in MEM, SW in EX, ADD in ID
+    assert dut.pc.value == int(old_pc) + 8
+    dut.rdata.value = 0xAD
+    dut.op.value = riscv_add(10, 5, 0)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # NOP in WB, SW in MEM, ADD in EX, NOP in ID
+    assert dut.pc.value == int(old_pc) + 12
+    assert dut.addr.value == 0xAD + 16
+    assert dut.wdata.value == 70
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # SW in WB, ADD in MEM
+    assert dut.pc.value == int(old_pc) + 16
+    assert dut.addr.value == 0xAD
+
+
+@cocotb.test
+async def test_data_hazard_memcpy_both_arguments(dut):
+    """
+    A memcpy where both the address and the value change
+    should only cost a single cycle of stall
+
+    lw x1, 12(x2)
+    sw x1, 16(x1)
+    """
+    await reset(dut)
+
+    old_pc = dut.pc.value
+    dut.op.value = riscv_lw(1, 2, 12)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in EX, SW in ID
+    assert dut.pc.value == int(old_pc) + 4
+    dut.op.value = riscv_sw(1, 1, 16)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in MEM, SW in EX, ADD in ID
+    # Having the LW in MEM, with the address being the one changing, should
+    # stall the pipeline
+    assert dut.pc.value == int(old_pc) + 4
+    assert dut.addr.value == 12
+    dut.op.value = riscv_add(1, 1, 1)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # LW in WB, NOP in MEM, SW in EX, ADD in ID
+    assert dut.pc.value == int(old_pc) + 8
+    dut.rdata.value = 0xAD
+    dut.op.value = riscv_add(1, 1, 1)
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # NOP in WB, SW in MEM, ADD in EX, NOP in ID
+    assert dut.pc.value == int(old_pc) + 12
+    assert dut.addr.value == 0xAD + 16
+    assert dut.wdata.value == 0xAD
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
+
+    # SW in WB, ADD in MEM
+    assert dut.pc.value == int(old_pc) + 16
+    assert dut.addr.value == 0xAD + 0xAD

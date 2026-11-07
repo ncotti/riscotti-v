@@ -48,7 +48,8 @@ module riscotti_v (
     logic [3:0] we_id, we_ex, we_valid_ex, we_mem;
     logic [4:0] rd_idx_id, rd_idx_ex, rd_idx_valid_ex, rd_idx_mem, rd_idx_wb;
     logic [31:0] rs1_ex;
-    logic [31:0] rs2_ex, rs2_mem;
+    logic [31:0] rs2_ex;
+    logic [31:0] rs2_ok_ex, rs2_ok_mem;
     logic [31:0] alu_op1_ex;
     logic [31:0] alu_op2_ex;
     logic branch_enable_ex, branch_enable_mem;
@@ -63,6 +64,7 @@ module riscotti_v (
     logic [31:0] rs1_forward_value_ex;
     logic [31:0] rs2_forward_value_ex;
     logic pc_stall_ex;
+    logic memcpy_ex, memcpy_mem;
 
     // Rename input signals with their pipeline-stage names
     assign rdata_wb = rdata;
@@ -161,8 +163,8 @@ module riscotti_v (
 
     assign alu_op1_ex = (pc_enable_ex) ? pc_ex :
         (rs1_forward_ex) ? rs1_forward_value_ex : rs1_ex;
-    assign alu_op2_ex = (imm_enable_ex) ? imm_ex :
-        (rs2_forward_ex) ? rs2_forward_value_ex : rs2_ex;
+    assign alu_op2_ex = (imm_enable_ex) ? imm_ex : rs2_ok_ex;
+    assign rs2_ok_ex = (rs2_forward_ex) ? rs2_forward_value_ex : rs2_ex;
 
     // TODO remove div_by_zero, maybe?
     alu alu_i (
@@ -199,7 +201,8 @@ module riscotti_v (
         .pc_stall(pc_stall_ex),
         .we_out(we_valid_ex),
         .rd_idx_out(rd_idx_valid_ex),
-        .branch_mode_out(branch_mode_valid_ex)
+        .branch_mode_out(branch_mode_valid_ex),
+        .memcpy(memcpy_ex)
     );
 
     assign pc_jump_ex = pc_ex + 4;
@@ -212,25 +215,27 @@ module riscotti_v (
         if (!rstN) begin
             branch_enable_mem <= '0;
             alu_out_mem <= '0;
-            rs2_mem <= '0;
+            rs2_ok_mem <= '0;
             load_mode_mem <= LM_NONE;
             we_mem <= 4'b0000;
             rd_idx_mem <= '0;
             pc_jump_mem <= '0;
+            memcpy_mem <= '0;
         end else begin
             branch_enable_mem <= branch_enable_ex;
             alu_out_mem <= alu_out_ex;
-            rs2_mem <= rs2_ex;
+            rs2_ok_mem <= rs2_ok_ex;
             load_mode_mem <= load_mode_ex;
             we_mem <= we_valid_ex;
             rd_idx_mem <= rd_idx_valid_ex;
             pc_jump_mem <= pc_jump_ex;
+            memcpy_mem <= memcpy_ex;
         end
     end
 
     assign alu_out_mux_mem = (branch_enable_mem) ? pc_jump_mem : alu_out_mem;
     assign addr_mem = alu_out_mux_mem;
-    assign wdata_mem = rs2_mem;
+    assign wdata_mem = (memcpy_mem) ? rd_wb : rs2_ok_mem;
 
     //-------------------------------------------------------------------------
     // WB

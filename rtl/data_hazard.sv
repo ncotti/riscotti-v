@@ -18,7 +18,8 @@ module data_hazard
     output logic pc_stall,
     output logic [3:0] we_out,
     output logic [4:0] rd_idx_out,
-    output branch_mode_t branch_mode_out
+    output branch_mode_t branch_mode_out,
+    output logic memcpy
 );
 
     timeunit 1ns; timeprecision 1ns;
@@ -32,8 +33,12 @@ module data_hazard
     assign rs2_forward_value = (rs2_idx_ex == rd_idx_mem) ? alu_out : rd;
 
     assign pc_stall = (load_mode != LM_NONE) &&
+        (~memcpy) &&
         ((rs1_idx_ex == rd_idx_mem) || (rs2_idx_ex == rd_idx_mem));
 
+    assign memcpy = (load_mode != LM_NONE) && (we_in != '0) &&
+        (rs2_idx_ex == rd_idx_mem) &&
+        (rs1_idx_ex != rd_idx_mem);
 
     // If pc_stall, then the current instruction will be made redundant, i.e.,
     // any write to memory, to register or branch instruction will be rendered
