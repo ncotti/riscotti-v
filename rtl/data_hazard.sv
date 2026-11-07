@@ -8,11 +8,17 @@ module data_hazard
     input logic [31:0] alu_out,
     input logic [31:0] rd,
     input load_mode_t load_mode,
+    input logic [3:0] we_in,
+    input logic [4:0] rd_idx_in,
+    input branch_mode_t branch_mode_in,
     output logic rs1_forward,
     output logic rs2_forward,
     output logic [31:0] rs1_forward_value,
     output logic [31:0] rs2_forward_value,
-    output logic pc_stall
+    output logic pc_stall,
+    output logic [3:0] we_out,
+    output logic [4:0] rd_idx_out,
+    output branch_mode_t branch_mode_out
 );
 
     timeunit 1ns; timeprecision 1ns;
@@ -27,5 +33,13 @@ module data_hazard
 
     assign pc_stall = (load_mode != LM_NONE) &&
         ((rs1_idx_ex == rd_idx_mem) || (rs2_idx_ex == rd_idx_mem));
+
+
+    // If pc_stall, then the current instruction will be made redundant, i.e.,
+    // any write to memory, to register or branch instruction will be rendered
+    // useless.
+    assign we_out = (pc_stall) ? '0 : we_in;
+    assign rd_idx_out = (pc_stall) ? '0 : rd_idx_in;
+    assign branch_mode_out = (pc_stall) ? BM_NONE : branch_mode_in;
 
 endmodule: data_hazard

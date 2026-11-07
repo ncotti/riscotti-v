@@ -657,7 +657,7 @@ async def test_data_hazard_memory(dut):
     await RisingEdge(dut.clk)
     dut.op.value = riscv_addi(3, 0, 30)
     await RisingEdge(dut.clk)
-    dut.op.value = riscv_addi(3, 0, 40)
+    dut.op.value = riscv_addi(4, 0, 40)
     await RisingEdge(dut.clk)
     dut.op.value = riscv_nop()
     await RisingEdge(dut.clk)
@@ -665,32 +665,48 @@ async def test_data_hazard_memory(dut):
     await RisingEdge(dut.clk)
 
     # LW in ID
-    dut.op.value = riscv_lw(1, 2, 8)
+    dut.op.value = riscv_lw(1, 2, 8)    # PC_i = PC0; PC = PC0 + 4
     await RisingEdge(dut.clk)
     await Timer(1, "ns")
 
     # LW in EX, ADD in ID
-    # We need to stall here, the PC should be freezed
+    # We need to stall here, so that the current PC, which points to
+    # the next instruction, does not move.
     old_pc = dut.pc.value
-    dut.op.value = riscv_add(1, 1, 3)
+    dut.op.value = riscv_add(1, 1, 3)   # PC_i = PC0 + 4; PC = PC0 + 8
     await RisingEdge(dut.clk)
     await Timer(1, "ns")
 
-    # LW in MEM, ADD in EX, SUB in ID
-    # This should be the last command being fetched, a NOP should be introduced
-    # into the MEM stage of the pipeline and the ADD instruction should not
-    # advance to the MEM stage.
+    # LW in MEM, NOP in EX, ADD in ID
+    # The pipeline is stalled, which means:
+    # 1. The program counter should retain its previous value.
+    # 2. A "NOP" instruction should be forced into the EX stage of the pipeline.
+    # 3. The previous "ADD" command should be re-entered into the ID stage.
     assert dut.pc.value == old_pc
-    dut.op.value = riscv_sub(1, 4, 1)
+    assert dut.addr.value == 28         # Address to be read by the LW instruction
+    dut.op.value = riscv_sub(1, 1, 4)   # PC_i = PC0 + 8; PC = PC0 + 8
     await RisingEdge(dut.clk)
     await Timer(1, "ns")
 
     # LW in WB, NOP in MEM, ADD in EX, SUB in ID
-    # The value from
+    # The pipeline is has resumed, which means:
+    # 1. PC value should increment as normal.
+    # 2. The NOP instruction is in the MEM stage.
+    # 3. Value from WB stage should be bypassed to the EX stage for the ADD.
+    assert dut.pc.value == int(old_pc) + 4
+    dut.op.value = riscv_sub(1, 1, 4)   # PC_i = PC0 + 8; PC = PC0 + 12
+    dut.rdata.value = 34                # Value read from address 28 in memory
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
 
+    # NOP in WB, ADD in MEM, SUB in EX, NOP in ID
+    assert dut.addr.value == 30 + 34
+    dut.op.value = riscv_nop()
+    await RisingEdge(dut.clk)
+    await Timer(1, "ns")
 
-
-    assert 0
+    # ADD in WB, SUB in MEM, NOP in EX
+    assert dut.addr.value == 64 - 40
 
 @cocotb.test
 async def test_data_hazard_memcpy(dut):

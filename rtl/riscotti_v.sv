@@ -37,16 +37,16 @@ module riscotti_v (
     logic [31:0] pc_if, pc_id, pc_ex;
     logic [31:0] pc_jump_ex, pc_jump_mem;
     logic pc_enable_id, pc_enable_ex;
-    logic [31:0] op_id;
+    logic [31:0] op_id, op_ex;
     logic [4:0] rs1_idx_id, rs1_idx_ex;
     logic [4:0] rs2_idx_id, rs2_idx_ex;
-    branch_mode_t branch_mode_id, branch_mode_ex;
+    branch_mode_t branch_mode_id, branch_mode_ex, branch_mode_valid_ex;
     logic [31:0] imm_id, imm_ex;
     logic imm_enable_id, imm_enable_ex;
     alu_mode_t alu_mode_id, alu_mode_ex;
     load_mode_t load_mode_id, load_mode_ex, load_mode_mem, load_mode_wb;
-    logic [3:0] we_id, we_ex, we_mem;
-    logic [4:0] rd_idx_id, rd_idx_ex, rd_idx_mem, rd_idx_wb;
+    logic [3:0] we_id, we_ex, we_valid_ex, we_mem;
+    logic [4:0] rd_idx_id, rd_idx_ex, rd_idx_valid_ex, rd_idx_mem, rd_idx_wb;
     logic [31:0] rs1_ex;
     logic [31:0] rs2_ex, rs2_mem;
     logic [31:0] alu_op1_ex;
@@ -95,7 +95,7 @@ module riscotti_v (
         end
     end
 
-    assign op_id = (pc_stall_ex) ? RiscvNop : op;
+    assign op_id = (pc_stall_ex) ? op_ex : op;
 
     // TODO valid_op as an exception
     instruction_decoder instruction_decoder_i (
@@ -142,6 +142,7 @@ module riscotti_v (
             pc_enable_ex <= 1'b0;
             rs1_idx_ex <= '0;
             rs2_idx_ex <= '0;
+            op_ex <= '0;
         end else begin
             pc_ex <= pc_id;
             branch_mode_ex <= branch_mode_id;
@@ -154,6 +155,7 @@ module riscotti_v (
             pc_enable_ex <= pc_enable_id;
             rs1_idx_ex <= rs1_idx_id;
             rs2_idx_ex <= rs2_idx_id;
+            op_ex <= op_id;
         end
     end
 
@@ -173,7 +175,7 @@ module riscotti_v (
     );
 
     brancher brancher_i (
-        .branch_mode(branch_mode_ex),
+        .branch_mode(branch_mode_valid_ex),
         .rs1(rs1_ex),
         .rs2(rs2_ex),
         .branch_enable(branch_enable_ex)
@@ -185,13 +187,19 @@ module riscotti_v (
         .rd_idx_mem(rd_idx_mem),
         .rd_idx_wb(rd_idx_wb),
         .load_mode(load_mode_mem),
+        .we_in(we_ex),
+        .rd_idx_in(rd_idx_ex),
+        .branch_mode_in(branch_mode_ex),
         .alu_out(alu_out_mem),
         .rd(rd_wb),
         .rs1_forward(rs1_forward_ex),
         .rs2_forward(rs2_forward_ex),
         .rs1_forward_value(rs1_forward_value_ex),
         .rs2_forward_value(rs2_forward_value_ex),
-        .pc_stall(pc_stall_ex)
+        .pc_stall(pc_stall_ex),
+        .we_out(we_valid_ex),
+        .rd_idx_out(rd_idx_valid_ex),
+        .branch_mode_out(branch_mode_valid_ex)
     );
 
     assign pc_jump_ex = pc_ex + 4;
@@ -214,8 +222,8 @@ module riscotti_v (
             alu_out_mem <= alu_out_ex;
             rs2_mem <= rs2_ex;
             load_mode_mem <= load_mode_ex;
-            we_mem <= we_ex;
-            rd_idx_mem <= rd_idx_ex;
+            we_mem <= we_valid_ex;
+            rd_idx_mem <= rd_idx_valid_ex;
             pc_jump_mem <= pc_jump_ex;
         end
     end

@@ -22,16 +22,23 @@ module pc_selector(
 
     timeunit 1ns; timeprecision 1ns;
 
+    logic [31:0] pc_prev, pc_reg;
+
+    assign pc = (pc_stall) ? pc_prev : pc_reg;
+
 always_ff @(posedge clk) begin
     if (!rstN) begin
-        pc <= '0;
+        pc_reg <= '0;
+        pc_prev <= '0;
     end else begin
+        pc_prev <= pc_reg;
+
         if (branch_enable) begin
-            pc <= branch_addr;
+            pc_reg <= branch_addr;
         end else if (pc_stall) begin
-            pc <= pc;
+            pc_reg <= pc_reg;
         end else begin
-            pc <= pc + 4;
+            pc_reg <= pc_reg + 4;
         end
     end
 end
