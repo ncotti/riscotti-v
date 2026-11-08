@@ -1,8 +1,7 @@
 `include "isa.svh"
 
 /// @brief Decides whether a branch instruction should "branch", i.e., update
-/// the program counter to a new arbitrary address, provided by the
-/// instruction.
+/// the program counter to a new arbitrary address.
 ///
 /// @param branch_mode Type of branch operation requested.
 /// @param rs1 Source register 1.

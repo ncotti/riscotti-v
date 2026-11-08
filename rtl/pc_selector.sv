@@ -8,6 +8,7 @@
 /// @param rstN Negative asserted reset signal.
 /// @param branch_enable When "1", the program counter will be set to
 /// "branch_addr".
+/// @param pc_stall If set, the PC won't be incremented in the next cycle.
 /// @param branch_addr When "branch_enable == 1", the program counter will
 /// be set to this value in the next clock cycle.
 /// @param pc Program counter (byte-address).

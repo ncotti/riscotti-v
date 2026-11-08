@@ -2,7 +2,7 @@
 
 /// @brief ALU (Arithmetic Logic Unit).
 ///
-/// @param WIDTH Width of operands.
+/// @param WIDTH Width of operands and result.
 /// @param op1 First operand.
 /// @param op2 Second operand.
 /// @param mode Operation to be performed.

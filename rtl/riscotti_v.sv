@@ -14,9 +14,9 @@
 /// @param clk Clock signal.
 /// @param rstN Negative asserted synchronous reset.
 /// @param op RV32IM instruction.
-/// @param din Data read from memory in "load" instructions.
+/// @param rdata Data read from memory in "load" instructions.
 /// @param pc Program counter value in the IF stage.
-/// @param dout Data to be stored in memory from "store" instructions.
+/// @param wdata Data to be stored in memory from "store" instructions.
 /// @param addr Address to be read or written from memory.
 /// @param we Write enable. Whether the memory address should be written or read.
 module riscotti_v (
@@ -175,26 +175,26 @@ module riscotti_v (
         .branch_enable(branch_enable_ex)
     );
 
-    data_hazard data_hazard_i (
+    hazard_controller hazard_controller_i (
         .rs1_idx_ex(rs1_idx_ex),
         .rs2_idx_ex(rs2_idx_ex),
         .rd_idx_ex(rd_idx_ex),
         .rd_idx_mem(rd_idx_ok_mem),
         .rd_idx_wb(rd_idx_ok_wb),
-        .load_mode(load_mode_mem),
-        .we_in(we_ex),
-        .branch_mode_in(branch_mode_ex),
+        .load_mode_mem(load_mode_mem),
+        .we_ex(we_ex),
+        .branch_mode_ex(branch_mode_ex),
         .branch_enable_mem(branch_enable_mem),
-        .alu_out(alu_out_mem),
-        .rd(rd_wb),
+        .alu_out_mem(alu_out_mem),
+        .rd_wb(rd_wb),
         .rs1_fe(rs1_fe_ex),
         .rs2_fe(rs2_fe_ex),
         .rs1_forward(rs1_forward_ex),
         .rs2_forward(rs2_forward_ex),
         .pc_stall(pc_stall_ex),
-        .we_out(we_ok_ex),
-        .rd_idx_out(rd_idx_ok_ex),
-        .branch_mode_out(branch_mode_ok_ex),
+        .we_ok_ex(we_ok_ex),
+        .rd_idx_ok_ex(rd_idx_ok_ex),
+        .branch_mode_ok_ex(branch_mode_ok_ex),
         .memcpy(memcpy_ex)
     );
 

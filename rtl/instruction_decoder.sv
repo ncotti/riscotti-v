@@ -20,6 +20,8 @@
 /// writes a half-word and `we = 0b1111` writes a word.
 /// @param branch_mode Indicates whether the instruction is a branch for the
 /// program counter, or `BM_NONE`.
+/// @param pc_enable If set, then ALU's first operand should be the program
+/// counter, not the `rs1`.
 module instruction_decoder
     import data_types::*;
     import isa::*;
